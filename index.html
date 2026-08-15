@@ -163,7 +163,7 @@
   .sit.pendente{background:var(--aplic-bg);color:var(--aplic)}
   .sit.enviado{background:#e7effa;color:#1c4a80}
   .sit.conferido{background:var(--ok-bg);color:var(--ok)}
-  .sit.recusado{background:var(--obrig-bg);color:var(--obrig)}
+  .sit.recusado{background:#c0392b;color:#fff}
 
   .acoes-item{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
   .bt{font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:8px;cursor:pointer;
@@ -185,6 +185,24 @@
   .prog-up i{display:block;height:100%;background:var(--navy);transition:width .2s}
 
   .motivo-recusa{margin-top:8px;font-size:12.5px;background:var(--obrig-bg);color:#7a1a15;border-radius:9px;padding:9px 12px}
+  /* Item com correção pedida: destaque forte, para o cliente não passar batido */
+  .item.recusado{background:#fff5f4;border-left:5px solid #c0392b;border-radius:10px;padding-left:14px;margin:8px 0}
+  .item.recusado .head .nome{color:#8b1e1e}
+  .correcao{margin-top:10px;background:#fdecea;border:1px solid #f1b8b2;border-left:5px solid #c0392b;color:#6f1a14;
+    border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.5}
+  .correcao b{color:#8b1e1e}
+  .correcao .oque{margin-top:6px;font-size:12.5px;color:#7a1a15}
+  .correcao .oque li{margin:2px 0 2px 16px}
+  /* Aviso no topo da pasta com todas as correções pendentes */
+  .painel-correcao{background:#fdecea;border:1px solid #f1b8b2;border-left:6px solid #c0392b;color:#6f1a14;
+    border-radius:12px;padding:16px 18px;margin:0 0 16px;font-size:14px;line-height:1.55}
+  .painel-correcao h3{margin:0 0 6px;font-size:16px;color:#8b1e1e;display:flex;align-items:center;gap:8px}
+  .painel-correcao ul{margin:6px 0 8px 18px;padding:0}
+  .painel-correcao li{margin:3px 0}
+  .painel-correcao .passo{margin-top:8px;font-size:13px}
+  .tag-corr{display:inline-block;background:#c0392b;color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px;letter-spacing:.03em;white-space:nowrap}
+  .pasta.tem-corr{border-left:5px solid #c0392b}
+  .mini.tem-corr{border-left:4px solid #c0392b}
 
   textarea,.campo input,.campo select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;
     font-family:inherit;font-size:14px;color:var(--ink);background:#fff}
@@ -806,6 +824,12 @@ async function carregarLista(){
   (arqs||[]).forEach(a => conta[a.pasta_id] = (conta[a.pasta_id]||0) + 1);
   pastas.forEach(p => p._arqs = conta[p.id] || 0);
 
+  // Quantos itens com correção pedida cada pasta tem — vira marca vermelha na lista.
+  const { data:recs } = await sb.from("itens").select("pasta_id").eq("situacao","recusado");
+  const contaRec = {};
+  (recs||[]).forEach(i => contaRec[i.pasta_id] = (contaRec[i.pasta_id]||0) + 1);
+  pastas.forEach(p => p._recusados = contaRec[p.id] || 0);
+
   aviso("");
   document.getElementById("telaPasta").classList.add("oculto");
   document.getElementById("telaLista").classList.remove("oculto");
@@ -825,12 +849,13 @@ function pintarCliente(){
   el.innerHTML = pastas.map(p => {
     const e = etapaInfo(p.etapa);
     const d = DATA[p.tipo];
-    return `<div class="pasta" data-id="${p.id}">
+    return `<div class="pasta ${p._recusados ? "tem-corr" : ""}" data-id="${p.id}">
       <div class="ico">${d ? d.ico : "📁"}</div>
       <div class="info">
         <span class="ref">${esc(p.referencia || "Pasta sem identificação")}</span>
         <div class="met">${d ? esc(d.label) : "Tipo de cobrança ainda não escolhido"}
           · ${p._arqs} arquivo(s) · atualizada em ${brl(p.atualizado_em)}</div>
+        ${p._recusados ? `<div style="margin-top:6px"><span class="tag-corr">⚠ ${p._recusados} documento(s) para corrigir</span></div>` : ""}
       </div>
       <div class="dir"><span class="etq" style="background:${e.cor}">${e.nome}</span></div>
     </div>`;
@@ -847,10 +872,11 @@ function pintarBoard(){
     const doGrupo = filtradas.filter(p => p.etapa === e.id);
     return `<div class="col">
       <h3><span class="pt" style="background:${e.cor}"></span>${e.nome}<span class="qt">${doGrupo.length}</span></h3>
-      ${doGrupo.map(p => `<div class="mini" data-id="${p.id}">
+      ${doGrupo.map(p => `<div class="mini ${p._recusados ? "tem-corr" : ""}" data-id="${p.id}">
         <b>${esc(p.referencia || "Pasta sem identificação")}</b>
         <span>${esc(nomeCliente(p.cliente_id))}</span>
         <span>${DATA[p.tipo] ? esc(DATA[p.tipo].label) : "tipo não escolhido"} · ${p._arqs} arquivo(s)</span>
+        ${p._recusados ? `<span class="tag-corr" style="margin-top:4px">aguardando correção (${p._recusados})</span>` : ""}
       </div>`).join("") || `<div style="font-size:12px;color:#98a1ad;padding:4px 2px">—</div>`}
     </div>`;
   }).join("");
@@ -1017,6 +1043,22 @@ function pintarPasta(){
     if(it.lvl === "obrig"){ obTot++; ok ? obProntos++ : faltam.push(T(it.n)); }
   }));
 
+  /* ---- correções pedidas pelo escritório: aviso grande, antes de tudo ---- */
+  const recusados = [];
+  secoes.forEach(sec => sec.items.forEach(it => {
+    const reg = itemDe(`${pasta.tipo}:${sec.id}:${it.id}`);
+    if(reg && reg.situacao === "recusado") recusados.push({nome:T(it.n), motivo:reg.motivo, chave:`${pasta.tipo}:${sec.id}:${it.id}`});
+  }));
+  if(recusados.length){
+    html += `<div class="painel-correcao" id="painelCorrecao">
+      <h3>⚠ ${ehEscritorio() ? "Correção pedida ao cliente" : "O escritório pediu correção"} em ${recusados.length} documento(s)</h3>
+      <ul>${recusados.map(r => `<li><b>${esc(r.nome)}</b>${r.motivo ? " — " + esc(r.motivo) : ""}</li>`).join("")}</ul>
+      ${ehEscritorio()
+        ? `<div class="passo">A pasta ${pasta.etapa === "preenchendo" ? "está reaberta: o cliente pode trocar os arquivos e enviar de novo." : "continua travada — se quiser que o cliente corrija, reabra a pasta (etapa <i>Preenchendo</i>)."}</div>`
+        : `<div class="passo"><b>O que fazer:</b> nos itens marcados em vermelho abaixo, clique em <b>remover</b> no arquivo errado, depois em <b>Anexar arquivo</b> para mandar o correto — e, ao final, clique em <b>Enviar ao escritório</b> novamente.${pasta.etapa !== "preenchendo" ? " <i>(Esta pasta ainda está travada; aguarde o escritório reabri-la ou entre em contato.)</i>" : ""}</div>`}
+    </div>`;
+  }
+
   html += `<div class="progress">
     <div class="row1">
       <div class="lead">Documentos — ${esc(T(d.label))} · ${esc((CREDORES.find(c=>c.id===pasta.credor)||CREDORES[0]).label)}</div>
@@ -1040,20 +1082,25 @@ function pintarPasta(){
       const reg = itemDe(chave);
       const s = situacaoDe(chave);
       const arqs = reg ? arquivosDe(reg.id) : [];
-      html += `<div class="item">
+      html += `<div class="item ${s === "recusado" ? "recusado" : ""}">
         <div class="corpo">
           <div class="head">
             <span class="nome">${esc(T(it.n))}</span>
             <span class="badge ${LEVELS[it.lvl].cls}">${LEVELS[it.lvl].label}</span>
             <span style="flex:1"></span>
-            <span class="sit ${s}">${{pendente:"Pendente",enviado:"Enviado",conferido:"Conferido",recusado:"Recusado"}[s]}</span>
+            <span class="sit ${s}">${{pendente:"Pendente",enviado:"Enviado",conferido:"Conferido",recusado:"⚠ Corrigir"}[s]}</span>
           </div>
           <div class="desc">${T(it.d)}</div>
           ${it.tip?`<div class="tip">${T(it.tip)}</div>`:""}
           ${reg && reg.obs_cliente ? `<div class="tip" style="background:#eef4fb;color:#1c3d63">
              <b>Observação do cliente:</b> ${esc(reg.obs_cliente)}</div>` : ""}
-          ${reg && reg.situacao === "recusado" && reg.motivo ? `<div class="motivo-recusa">
-             <b>O escritório pediu correção:</b> ${esc(reg.motivo)}</div>` : ""}
+          ${reg && reg.situacao === "recusado" ? `<div class="correcao">
+             <b>⚠ O escritório pediu correção deste documento${reg.motivo ? ":" : "."}</b> ${reg.motivo ? esc(reg.motivo) : ""}
+             ${!ehEscritorio() ? `<div class="oque"><b>O que fazer:</b><ul>
+               <li>clique em <b>remover</b> no arquivo errado (abaixo);</li>
+               <li>clique em <b>Anexar arquivo</b> e envie o documento correto;</li>
+               <li>no fim da página, clique em <b>Enviar ao escritório</b> de novo.</li></ul></div>` : ""}
+           </div>` : ""}
           ${arqs.length ? `<div class="arqs">${arqs.map(a => `
             <div class="arq">
               <span class="nm">${esc(a.nome_protocolo || a.nome_original)}</span>
@@ -1495,8 +1542,20 @@ async function baixarPacote(){
     }
     bt.textContent = "Montando…";
     for(const a of ordenados){
-      const { data, error } = await sb.storage.from("documentos").download(a.caminho);
-      if(error){ relacao.push(`[FALHOU] ${a.nome_protocolo || a.nome_original} — ${error.message}`); continue; }
+      // Lê o arquivo pelo mesmo caminho do botão "baixar" (link assinado), que
+      // é o que funciona em qualquer navegador; a API direta fica como reserva.
+      let data = null, erro = null;
+      try{
+        const s = await sb.storage.from("documentos").createSignedUrl(a.caminho, 300);
+        if(s.error) throw s.error;
+        const resp = await fetch(s.data.signedUrl);
+        if(!resp.ok) throw new Error("HTTP " + resp.status);
+        data = await resp.blob();
+      }catch(e1){
+        const r = await sb.storage.from("documentos").download(a.caminho);
+        if(r.error) erro = (e1 && e1.message ? e1.message + " / " : "") + r.error.message; else data = r.data;
+      }
+      if(!data){ relacao.push(`[FALHOU] ${a.nome_protocolo || a.nome_original} — ${erro || "sem resposta"}`); continue; }
       let nome = a.nome_protocolo || a.nome_original;
       usados[nome] = (usados[nome] || 0) + 1;
       if(usados[nome] > 1){
