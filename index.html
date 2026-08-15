@@ -1058,6 +1058,7 @@ function pintarPasta(){
             <div class="arq">
               <span class="nm">${esc(a.nome_protocolo || a.nome_original)}</span>
               <span class="tam">${kb(a.tamanho)}</span>
+              <button data-abrir="${a.id}" title="Ver o arquivo numa nova aba, sem baixar">abrir</button>
               <button data-baixar="${a.id}">baixar</button>
               ${podeAnexar() ? `<button class="x" data-apagar="${a.id}">remover</button>` : ""}
             </div>`).join("")}</div>` : ""}
@@ -1118,7 +1119,10 @@ function pintarPasta(){
         Depois de enviar, os documentos ficam travados para conferência. Se faltar algo, o escritório avisa por aqui.</p>`;
     } else {
       html += `<div class="vazio" style="border-style:solid;background:var(--ok-bg);border-color:#c3e4d1;color:#12603a">
-        Pasta entregue ao escritório em ${brl(pasta.enviado_em)}. Acompanhe o andamento pela trilha no topo.</div>`;
+        Pasta entregue ao escritório em ${brl(pasta.enviado_em)}. Acompanhe o andamento pela trilha no topo.</div>
+      <div class="rodape-acoes">
+        <button class="btg primary" id="btVoltarLista">← Voltar para minhas pastas</button>
+      </div>`;
     }
   }
 
@@ -1164,6 +1168,7 @@ function ligarEventosPasta(){
 
   el.querySelectorAll("[data-anexar]").forEach(b => b.onclick = () => escolherArquivos(b.dataset));
   el.querySelectorAll("[data-obs]").forEach(b => b.onclick = () => pedirObservacao(b.dataset));
+  el.querySelectorAll("[data-abrir]").forEach(b => b.onclick = () => abrirArquivo(b.dataset.abrir));
   el.querySelectorAll("[data-baixar]").forEach(b => b.onclick = () => baixar(b.dataset.baixar));
   el.querySelectorAll("[data-apagar]").forEach(b => b.onclick = () => apagarArquivo(b.dataset.apagar));
   el.querySelectorAll("[data-conferir]").forEach(b => b.onclick = () => julgar(b.dataset.conferir,"conferido"));
@@ -1184,6 +1189,8 @@ function ligarEventosPasta(){
   if(btApagar) btApagar.onclick = excluirPasta;
   const btRelatorio = el.querySelector("#btRelatorio");
   if(btRelatorio) btRelatorio.onclick = baixarRelatorio;
+  const btVoltarLista = el.querySelector("#btVoltarLista");
+  if(btVoltarLista) btVoltarLista.onclick = fecharPasta;
 }
 
 async function gravarPreenchimento(repintar){
@@ -1360,6 +1367,18 @@ async function julgar(chave, veredicto){
 }
 
 /* ---- arquivos ---- */
+/* Abre o arquivo numa aba, sem baixar: PDF e imagens o navegador mostra na
+   hora. A janela é aberta ANTES do pedido ao servidor, senão o bloqueador de
+   pop-ups derruba a aba por não vir de um clique direto. */
+async function abrirArquivo(id){
+  const a = arquivos.find(x => x.id === id);
+  if(!a) return;
+  const w = window.open("", "_blank");
+  const { data, error } = await sb.storage.from("documentos").createSignedUrl(a.caminho, 300);
+  if(error){ if(w) w.close(); aviso("Não foi possível abrir o arquivo: "+esc(error.message),"err"); return; }
+  if(w) w.location = data.signedUrl; else window.open(data.signedUrl, "_blank");
+}
+
 async function baixar(id){
   const a = arquivos.find(x => x.id === id);
   if(!a) return;
@@ -1403,8 +1422,12 @@ function enviarAoEscritorio(){
     await gravarPreenchimento();
     const { error } = await sb.rpc("enviar_pasta", {p_pasta: pasta.id});
     if(error){ aviso("Não foi possível enviar: "+esc(error.message),"err"); return; }
-    await recarregarPasta();
-    aviso("Pasta enviada ao escritório. Você será avisado por aqui se faltar alguma coisa.","ok");
+    // Volta para a lista de pastas: o trabalho do cliente nesta pasta acabou.
+    // A confirmação aparece lá; se ele quiser rever, é só abrir a pasta de novo.
+    pasta = null;
+    await carregarLista();
+    aviso(`<b>Pasta enviada ao escritório.</b> Ela agora aparece como "Enviado pelo cliente" e fica travada para conferência. Se faltar alguma coisa, o aviso chega por aqui e a pasta é reaberta para você corrigir.`,"ok");
+    window.scrollTo({top:0, behavior:"smooth"});
   });
 }
 
