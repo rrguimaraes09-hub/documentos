@@ -966,8 +966,20 @@ function secoesVisiveis(){
   const d = DATA[pasta.tipo];
   if(!d) return [];
   const motivos = Array.isArray(pasta.motivos) ? pasta.motivos : ["inad"];
-  return d.sections.filter(s => !s.motivo || motivos.includes(s.motivo));
+  const vis = d.sections.filter(s => !s.motivo || motivos.includes(s.motivo));
+  return vis.concat([SECAO_OUTROS(vis.length + 1)]);
 }
+
+/* Seção extra, presente em todo tipo de cobrança: qualquer coisa que o cliente
+   ache útil e não tenha linha própria. Aceita vários arquivos; cada um mantém
+   o nome original, que aqui é a única pista do que é. */
+const SECAO_OUTROS = num => ({
+  id:"outros", num, title:"Outros documentos", extra:true,
+  tip:"Tudo o que você achar útil e não se encaixou nas linhas acima — pode anexar quantos arquivos quiser. Use a Observação para explicar o que é cada um.",
+  items:[{id:"outros", n:"Outros documentos que julgar relevantes", lvl:"aplic",
+    d:"Ex.: e-mails, prints de conversa, comprovantes, contratos acessórios, laudos, telas de sistema. Os arquivos ficam com o nome original."}]
+});
+const ehOutros = (secId, itId) => secId === "outros" && itId === "outros";
 
 function situacaoDe(chave){
   const it = itemDe(chave);
@@ -1354,10 +1366,13 @@ document.getElementById("inputArquivo").onchange = async e => {
     if(up.error){ aviso("Falha ao enviar "+esc(f.name)+": "+esc(up.error.message),"err"); continue; }
 
     const sufixo = enviar.length > 1 ? ` (${feitos+1})` : "";
+    const nomeFinal = ehOutros(ds.sec, ds.it)
+      ? "Outros - " + f.name.replace(/[\\/:*?"<>|]/g,"").slice(0,90)   // mantém o nome original
+      : base + sufixo + ext(f.name);
     const ins = await sb.from("arquivos").insert({
       id, pasta_id: pasta.id, item_id: reg.id, caminho,
       nome_original: f.name,
-      nome_protocolo: base + sufixo + ext(f.name),
+      nome_protocolo: nomeFinal,
       ordem: ordemDoItem(ds.sec, ds.it),
       tamanho: f.size, tipo_mime: f.type || null, enviado_por: eu.user_id
     });
@@ -1383,6 +1398,7 @@ document.getElementById("inputArquivo").onchange = async e => {
 function ordemDoItem(secId, itId){
   const d = DATA[pasta.tipo];
   if(!d) return 999;
+  if(ehOutros(secId, itId)) return 900;   // sempre no fim, antes só do desconhecido
   let n = 0;
   for(const sec of d.sections){
     for(const it of sec.items){
