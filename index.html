@@ -136,6 +136,8 @@
     border-radius:8px;background:var(--line-2);color:var(--muted);letter-spacing:.2px}
   .tpasso.on{background:var(--navy);color:#fff}
   .tpasso.feito{background:#d6dfec;color:var(--navy)}
+  .tpasso.clicavel{cursor:pointer}
+  .tpasso.clicavel:hover{outline:2px solid var(--gold);outline-offset:-2px}
 
   /* ---------- seções e itens ---------- */
   .section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
@@ -991,8 +993,11 @@ function pintarPasta(){
 
     <div class="trilha">${ETAPAS.map((e,i)=>{
       const at = etapaIdx(pasta.etapa);
-      return `<div class="tpasso ${i===at?"on":i<at?"feito":""}">${e.nome}</div>`;
-    }).join("")}</div>`;
+      const clicavel = ehEscritorio() && i !== at;
+      return `<div class="tpasso ${i===at?"on":i<at?"feito":""} ${clicavel?"clicavel":""}"
+        ${clicavel ? `data-etapa="${e.id}" title="Mover esta pasta para “${e.nome}”"` : ""}>${e.nome}</div>`;
+    }).join("")}</div>
+    ${ehEscritorio() ? `<div style="font-size:12px;color:var(--muted);margin:-6px 0 14px">Clique numa etapa da trilha para mover a pasta.</div>` : ""}`;
 
   /* ---- identificação ---- */
   html += `<div class="card">
@@ -1211,6 +1216,8 @@ function ligarEventosPasta(){
     salvandoTimer = setTimeout(gravarPreenchimento, 600);
   };
   ["fRef","fContato","fObs"].forEach(id => { const n = el.querySelector("#"+id); if(n && !n.disabled) n.oninput = salvarCampos; });
+
+  el.querySelectorAll("[data-etapa]").forEach(b => b.onclick = () => moverEtapa(b.dataset.etapa));
 
   el.querySelectorAll("[data-credor]").forEach(b => b.onclick = () => {
     pasta.credor = b.dataset.credor; gravarPreenchimento(true);
@@ -1546,6 +1553,24 @@ function excluirPasta(){
 }
 
 /* ---- escritório ---- */
+/* Trilha clicável (escritório): move a pasta de etapa com confirmação. */
+function moverEtapa(nova){
+  const de = etapaInfo(pasta.etapa), para = etapaInfo(nova);
+  if(!para || nova === pasta.etapa) return;
+  let msg = `Mover a pasta de “${de.nome}” para “${para.nome}”?`;
+  if(nova === "preenchendo") msg += " Isso REABRE a pasta para o cliente: ele volta a poder anexar e remover arquivos.";
+  if(nova === "protocolado" && !pasta.processo) msg += " Dica: informe o número do processo na área do escritório.";
+  confirmar(msg, "Mover", async () => {
+    const campos = {etapa: nova};
+    if(nova === "protocolado" && !pasta.protocolo_em) campos.protocolo_em = new Date().toISOString().slice(0,10);
+    const { error } = await sb.from("pastas").update(campos).eq("id", pasta.id);
+    if(error){ aviso("Não foi possível mover: "+esc(error.message),"err"); return; }
+    await recarregarPasta();
+    aviso(`Pasta movida para “${para.nome}”.`,"ok");
+    window.scrollTo({top:0, behavior:"smooth"});
+  });
+}
+
 async function salvarEscritorio(){
   const el = document.getElementById("telaPasta");
   const etapa = el.querySelector("#fEtapa").value;
