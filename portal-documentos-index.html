@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal de Documentos — Felipe Albuquerque Advocacia</title>
+<style>
+  :root{
+    --navy:#1b2a4a; --navy-2:#24365c; --gold:#b0893c;
+    --ink:#1f2733; --muted:#5b6675; --line:#e4e7ec; --line-2:#eef1f5;
+    --bg:#f4f6f9; --card:#ffffff;
+    --obrig:#b3261e; --obrig-bg:#fdeceb;
+    --recom:#8a6a1f; --recom-bg:#fbf3df;
+    --aplic:#5b6675; --aplic-bg:#eef1f5;
+    --ok:#1f7a4d; --ok-bg:#e7f4ec;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --serif:Georgia,"Times New Roman",serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .oculto{display:none !important}
+  button{font-family:inherit}
+
+  /* ---------- carregando ---------- */
+  .carregando{min-height:100vh;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
+
+  /* ---------- login ---------- */
+  .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+    background:linear-gradient(160deg,var(--navy),#0f1a30)}
+  .login-cx{width:100%;max-width:380px;background:#fff;border-radius:var(--radius);padding:30px 28px 24px;
+    box-shadow:0 20px 60px rgba(0,0,0,.35)}
+  .login-marca{text-align:center;margin-bottom:22px}
+  .fa{width:46px;height:46px;margin:0 auto;border:1.5px solid var(--gold);border-radius:9px;display:flex;
+    align-items:center;justify-content:center;font-family:var(--serif);font-weight:700;letter-spacing:1px;
+    color:var(--gold);font-size:18px}
+  .login-marca h1{font-family:var(--serif);font-size:19px;margin:14px 0 2px;color:var(--navy)}
+  .login-marca p{margin:0;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+  .login-cx label{display:block;font-size:12px;color:var(--muted);font-weight:600;margin:14px 0 5px}
+  .login-cx input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit}
+  .login-cx input:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,42,74,.10)}
+  .entrar{width:100%;margin-top:20px;padding:12px;border:0;border-radius:9px;background:var(--navy);color:#fff;
+    font-size:14.5px;font-weight:600;cursor:pointer}
+  .entrar:hover{background:var(--navy-2)} .entrar:disabled{opacity:.6;cursor:default}
+  .erro{display:none;margin-top:12px;padding:10px 12px;background:var(--obrig-bg);color:#7a1a15;border-radius:9px;font-size:13px}
+  .login-cx .rodape{margin-top:18px;padding-top:14px;border-top:1px solid var(--line-2);font-size:11.5px;color:var(--muted);text-align:center;line-height:1.6}
+
+  /* ---------- topo ---------- */
+  .topo{display:flex;align-items:center;gap:12px;padding:12px 20px;background:var(--navy);color:#fff;
+    position:sticky;top:0;z-index:40;flex-wrap:wrap}
+  .topo .fa{width:34px;height:34px;font-size:13px}
+  .topo .txt{font-family:var(--serif);font-size:15px;font-weight:700;letter-spacing:.4px}
+  .topo .marca{display:flex;align-items:center;gap:10px}
+  .topo .sep{flex:1}
+  .quem{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#cfd6e6}
+  .selo{font-size:10px;font-weight:700;letter-spacing:.6px;background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.28);padding:2px 8px;border-radius:20px}
+  .bt-topo{font-size:12.5px;font-weight:600;color:#e7ecf6;background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.28);padding:7px 14px;border-radius:20px;cursor:pointer;white-space:nowrap}
+  .bt-topo:hover{background:rgba(255,255,255,.18);border-color:var(--gold)}
+  .bt-ouro{background:var(--gold);border-color:var(--gold);color:#12203a}
+  .bt-ouro:hover{background:#c39a48;border-color:#c39a48}
+
+  .wrap{max-width:960px;margin:0 auto;padding:22px 20px 90px}
+  .wrap-larga{max-width:1500px;margin:0 auto;padding:18px 18px 60px}
+
+  .aviso{display:flex;gap:9px;margin:14px 20px 0;padding:11px 14px;border-radius:10px;font-size:13px;
+    background:#eef4fb;color:#1c3d63;border:1px solid #d3e2f2}
+  .aviso.err{background:var(--obrig-bg);color:#7a1a15;border-color:#f3cdc9}
+  .aviso.ok{background:var(--ok-bg);color:#12603a;border-color:#c3e4d1}
+
+  /* ---------- cards / listas ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:20px 22px;margin-top:18px}
+  .card > h2.block{margin:0 0 14px;font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+
+  .titulo-pg{font-family:var(--serif);font-size:22px;margin:6px 0 2px;color:var(--navy)}
+  .sub-pg{margin:0;color:var(--muted);font-size:13.5px}
+
+  .pasta{display:flex;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);
+    border-radius:12px;padding:15px 17px;margin-top:12px;cursor:pointer;transition:.15s}
+  .pasta:hover{border-color:var(--navy);box-shadow:0 4px 14px rgba(16,24,40,.08)}
+  .pasta .ico{font-size:22px}
+  .pasta .info{flex:1;min-width:0}
+  .pasta .ref{font-weight:700;font-size:14.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pasta .met{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .pasta .dir{text-align:right;flex:0 0 auto}
+  .minibar{width:120px;height:6px;background:var(--line-2);border-radius:20px;overflow:hidden;margin-top:6px}
+  .minibar i{display:block;height:100%;background:var(--gold);border-radius:20px;transition:width .3s}
+
+  .etq{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+    padding:3px 9px;border-radius:20px;color:#fff;white-space:nowrap}
+
+  .vazio{background:#fff;border:1px dashed var(--line);border-radius:12px;padding:34px 20px;text-align:center;
+    color:var(--muted);font-size:14px;margin-top:16px}
+
+  /* ---------- board do escritório ---------- */
+  .board{display:grid;grid-template-columns:repeat(6,minmax(210px,1fr));gap:12px;margin-top:14px;
+    overflow-x:auto;padding-bottom:8px;align-items:start}
+  .col{background:#eceff4;border-radius:12px;padding:10px;min-height:120px}
+  .col h3{margin:0 0 9px;font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);
+    display:flex;align-items:center;gap:7px}
+  .col h3 .pt{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+  .col h3 .qt{margin-left:auto;background:#fff;border-radius:20px;padding:1px 8px;font-size:11px;color:var(--muted)}
+  .mini{background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:9px;
+    cursor:pointer;transition:.15s}
+  .mini:hover{border-color:var(--navy);box-shadow:0 3px 10px rgba(16,24,40,.09)}
+  .mini b{display:block;font-size:13px;line-height:1.35;margin-bottom:3px}
+  .mini span{font-size:11.5px;color:var(--muted);display:block}
+
+  .barra{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:4px}
+  .busca{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);
+    border-radius:20px;padding:7px 14px;color:var(--muted);min-width:250px}
+  .busca input{border:0;outline:0;font-size:13px;font-family:inherit;flex:1;color:var(--ink)}
+
+  /* ---------- barra de progresso ---------- */
+  .progress{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:16px 20px;margin-top:18px;position:sticky;top:60px;z-index:20}
+  .progress .row1{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .progress .lead{font-weight:700;font-size:14px;flex:1;min-width:200px}
+  .chip{font-size:12px;font-weight:600;padding:4px 11px;border-radius:20px;border:1px solid var(--line);white-space:nowrap}
+  .chip.obrig{background:var(--obrig-bg);color:var(--obrig);border-color:transparent}
+  .chip.done{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+  .bar{height:8px;background:var(--line-2);border-radius:20px;overflow:hidden;margin-top:12px}
+  .bar i{display:block;height:100%;background:var(--gold);border-radius:20px;transition:width .3s}
+  .alert{display:none;margin-top:11px;font-size:13px;background:var(--obrig-bg);color:#7a1a15;
+    border-radius:9px;padding:10px 13px}
+  .alert.show{display:block}
+  .alert.ok{background:var(--ok-bg);color:#12603a}
+
+  /* ---------- trilha ---------- */
+  .trilha{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+  .tpasso{flex:1;min-width:98px;text-align:center;font-size:11px;font-weight:600;padding:7px 5px;
+    border-radius:8px;background:var(--line-2);color:var(--muted);letter-spacing:.2px}
+  .tpasso.on{background:var(--navy);color:#fff}
+  .tpasso.feito{background:#d6dfec;color:var(--navy)}
+
+  /* ---------- seções e itens ---------- */
+  .section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:18px 22px 8px;margin-top:18px}
+  .section h3{margin:0 0 4px;font-family:var(--serif);font-size:16.5px;color:var(--navy);display:flex;align-items:center;gap:10px}
+  .section h3 .num{width:24px;height:24px;flex:0 0 auto;border-radius:50%;background:var(--navy);color:#fff;
+    font-family:var(--font);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .stip{font-size:12.5px;color:var(--muted);margin-bottom:10px}
+  .goldline{height:2px;background:var(--gold);opacity:.5;margin-bottom:4px}
+
+  .item{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--line-2)}
+  .item:last-child{border-bottom:0}
+  .item.hide{display:none}
+  .item .corpo{flex:1;min-width:0}
+  .item .head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .item .nome{font-weight:600;font-size:14px}
+  .badge{font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 8px;border-radius:20px}
+  .badge.obrig{background:var(--obrig-bg);color:var(--obrig)}
+  .badge.recom{background:var(--recom-bg);color:var(--recom)}
+  .badge.aplic{background:var(--aplic-bg);color:var(--aplic)}
+  .desc{font-size:13px;color:var(--muted);margin-top:3px}
+  .tip{margin-top:9px;font-size:12.5px;background:var(--recom-bg);color:#6b5316;border-radius:9px;padding:9px 12px}
+  .sit{font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:3px 9px;
+    border-radius:20px;white-space:nowrap}
+  .sit.pendente{background:var(--aplic-bg);color:var(--aplic)}
+  .sit.enviado{background:#e7effa;color:#1c4a80}
+  .sit.conferido{background:var(--ok-bg);color:var(--ok)}
+  .sit.recusado{background:var(--obrig-bg);color:var(--obrig)}
+
+  .acoes-item{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .bt{font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:8px;cursor:pointer;
+    border:1px solid var(--line);background:#fff;color:var(--ink)}
+  .bt:hover{border-color:var(--navy)}
+  .bt.forte{background:var(--navy);border-color:var(--navy);color:#fff}
+  .bt.forte:hover{background:var(--navy-2)}
+  .bt.ouro{background:var(--gold);border-color:var(--gold);color:#12203a}
+  .bt.perigo{color:var(--obrig);border-color:#f3cdc9}
+  .bt:disabled{opacity:.5;cursor:default}
+
+  .arqs{margin-top:9px;display:flex;flex-direction:column;gap:6px}
+  .arq{display:flex;align-items:center;gap:9px;background:var(--line-2);border-radius:8px;padding:7px 11px;font-size:12.5px}
+  .arq .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .arq .tam{color:var(--muted);font-size:11.5px;white-space:nowrap}
+  .arq a,.arq button{font-size:11.5px;font-weight:600;color:var(--navy);background:none;border:0;cursor:pointer;padding:0}
+  .arq button.x{color:var(--obrig)}
+  .prog-up{height:4px;background:#d7dde6;border-radius:20px;overflow:hidden;margin-top:6px}
+  .prog-up i{display:block;height:100%;background:var(--navy);transition:width .2s}
+
+  .motivo-recusa{margin-top:8px;font-size:12.5px;background:var(--obrig-bg);color:#7a1a15;border-radius:9px;padding:9px 12px}
+
+  textarea,.campo input,.campo select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;
+    font-family:inherit;font-size:14px;color:var(--ink);background:#fff}
+  textarea{min-height:88px;resize:vertical}
+  textarea:focus,.campo input:focus,.campo select:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,42,74,.10)}
+  .campo label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+  .pick-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .pick{text-align:left;cursor:pointer;background:#fff;border:1.5px solid var(--line);border-radius:12px;
+    padding:15px 16px;transition:.15s;display:flex;gap:13px;align-items:flex-start}
+  .pick:hover{border-color:var(--navy)}
+  .pick.active{border-color:var(--navy);background:#f7f9fc;box-shadow:0 0 0 3px rgba(27,42,74,.10)}
+  .pick .ico{font-size:22px;line-height:1;margin-top:1px}
+  .pick .dot{width:18px;height:18px;border-radius:50%;border:2px solid #b8c0cd;flex:0 0 auto;margin-top:1px;position:relative}
+  .pick.active .dot{border-color:var(--navy)}
+  .pick.active .dot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--navy)}
+  .pick .t{display:block;font-size:14.5px;font-weight:700}
+  .pick .d{display:block;font-size:12.5px;color:var(--muted);margin-top:3px}
+  .pick:disabled{opacity:.55;cursor:default}
+
+  .mopts{display:flex;gap:10px;flex-wrap:wrap}
+  .mopt{display:flex;align-items:center;gap:9px;background:#fff;border:1.5px solid var(--line);border-radius:20px;
+    padding:8px 15px;font-size:13px;cursor:pointer}
+  .mopt.on{border-color:var(--navy);background:#f7f9fc}
+  .mopt.base{cursor:default;opacity:.75}
+  .mopt .box{width:15px;height:15px;border:1.5px solid #b8c0cd;border-radius:4px;position:relative;flex:0 0 auto}
+  .mopt.on .box{background:var(--navy);border-color:var(--navy)}
+  .mopt.on .box::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;
+    border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+
+  .rodape-acoes{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:24px}
+  .btg{padding:13px 26px;border-radius:10px;font-size:14.5px;font-weight:600;cursor:pointer;border:1px solid var(--line);background:#fff}
+  .btg.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+  .btg.primary:hover{background:var(--navy-2)}
+  .btg:disabled{opacity:.5;cursor:default}
+
+  .voltar{background:none;border:0;color:var(--navy);font-size:13px;font-weight:600;cursor:pointer;padding:0;margin-bottom:4px}
+
+  /* ---------- modal ---------- */
+  .modal-bg{position:fixed;inset:0;background:rgba(16,24,40,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:100}
+  .modal-bg.show{display:flex}
+  .modal{background:#fff;border-radius:14px;padding:24px;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .modal p{margin:0 0 8px;font-size:14.5px}
+  .modal .btns{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+  .modal .btns button{padding:9px 18px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;border:1px solid var(--line);background:#fff}
+  .modal .btns .sim{background:var(--navy);border-color:var(--navy);color:#fff}
+
+  .rodape-doc{text-align:center;color:var(--muted);font-size:11.5px;margin-top:40px;line-height:1.7}
+
+  @media (max-width:760px){
+    .grid2,.pick-grid{grid-template-columns:1fr}
+    .board{grid-template-columns:repeat(6,minmax(230px,1fr))}
+    .progress{position:static}
+  }
+</style>
+</head>
+<body>
+
+<!-- =====================================================================
+     CONFIGURAÇÃO — mesmo projeto Supabase do Painel de Cedentes.
+     A chave "anon" é feita para ficar em página pública: sozinha ela não
+     abre nada, porque toda a permissão é decidida pelo banco (RLS + login).
+     NUNCA coloque aqui a chave "service_role".
+     ===================================================================== -->
+<script>
+const SUPABASE_URL = "https://jhtucanundmlsmipfnie.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_MTMJaYe0e2kplnrR_TZfpA_Hq8JXXGK";
+</script>
+
+<div class="carregando" id="carregando">carregando…</div>
+
+<!-- ============ LOGIN ============ -->
+<div class="login oculto" id="telaLogin">
+  <form class="login-cx" id="formLogin" autocomplete="on">
+    <div class="login-marca">
+      <div class="fa">F|A</div>
+      <h1>Portal de Documentos</h1>
+      <p>Felipe Albuquerque Advocacia</p>
+    </div>
+    <label for="email">E-mail</label>
+    <input type="email" id="email" name="email" autocomplete="username" required>
+    <label for="senha">Senha</label>
+    <input type="password" id="senha" name="password" autocomplete="current-password" required>
+    <button type="submit" class="entrar" id="btEntrar">Entrar</button>
+    <div class="erro" id="loginErro"></div>
+    <div class="rodape">
+      É o mesmo login do Painel de Análise de Cedentes.<br>
+      O cadastro de usuários é feito pelo escritório — em caso de dificuldade,
+      procure <b>contato@felipeadv.com.br</b>.
+    </div>
+  </form>
+</div>
+
+<!-- ============ APLICAÇÃO ============ -->
+<div id="app" class="oculto">
+  <div class="topo">
+    <div class="marca"><div class="fa">F|A</div><span class="txt">Portal de Documentos</span></div>
+    <div class="sep"></div>
+    <div class="quem"><b id="quemNome">—</b><span class="selo" id="quemSelo">—</span></div>
+    <button class="bt-topo bt-ouro" id="btNova">+ Nova pasta</button>
+    <button class="bt-topo" id="btSair">Sair</button>
+  </div>
+
+  <div id="avisoBox"></div>
+
+  <!-- ---- LISTA ---- -->
+  <div id="telaLista">
+    <div id="visaoCliente" class="wrap oculto">
+      <h1 class="titulo-pg">Minhas pastas de documentos</h1>
+      <p class="sub-pg">Cada pasta é um caso. Marque o que tem, anexe os documentos e envie ao escritório.</p>
+      <div id="listaCliente"></div>
+    </div>
+
+    <div id="visaoEscritorio" class="wrap-larga oculto">
+      <div class="barra">
+        <div class="busca">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="text" id="busca" placeholder="Buscar por referência, cliente ou processo...">
+        </div>
+      </div>
+      <div class="board" id="board"></div>
+    </div>
+  </div>
+
+  <!-- ---- DETALHE DA PASTA ---- -->
+  <div id="telaPasta" class="wrap oculto"></div>
+</div>
+
+<!-- ============ MODAL ============ -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal" role="dialog" aria-modal="true">
+    <p id="modalMsg"></p>
+    <div id="modalExtra"></div>
+    <div class="btns">
+      <button id="modalNao">Cancelar</button>
+      <button class="sim" id="modalSim">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="inputArquivo" multiple class="oculto">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* =========================================================================
+   1. O CHECKLIST — cópia fiel do manifesto publicado em
+      https://rrguimaraes09-hub.github.io/checklist/
+      Mantido igual de propósito: é ele que define os documentos e a chave
+      estável de cada linha ("tipo:seção:item"), gravada no banco.
+   ========================================================================= */
+const LEVELS = {
+  obrig:{cls:"obrig",label:"Obrigatório"},
+  recom:{cls:"recom",label:"Recomendado"},
+  aplic:{cls:"aplic",label:"Se aplicável"}
+};
+
+const CESSAO_BASE = {
+  id:"cessao", num:1, title:"Documentos da operação de cessão",
+  tip:"Provam que o crédito foi adquirido do cedente pela securitizadora/FIDC.",
+  items:[
+    {id:"contrato", n:"Contrato de cessão de crédito", lvl:"obrig",
+     d:"Contrato que transferiu o crédito do cedente (empresa que originou o título) para a securitizadora/FIDC."},
+    {id:"aditivos", n:"Termos aditivos ao contrato-mãe", lvl:"obrig",
+     d:"Aditivos que alteraram o contrato principal. Também precisam estar assinados por duas testemunhas."},
+    {id:"pgto", n:"Comprovante de pagamento ao cedente (TED/boleto)", lvl:"obrig",
+     d:"Comprovante de que a securitizadora/FIDC efetivamente pagou pelo crédito adquirido."}
+  ]
+};
+
+function DEMO(){return {id:"demo", n:"Posição atual do débito — o que está pago e o que está em aberto", lvl:"obrig",
+  d:"Planilha com valor principal, juros, multa e correção monetária, indicando o que já foi pago e o saldo em aberto, com a memória de cálculo."};}
+function COBR(){return {id:"cobranca", n:"Comunicações e tentativas de cobrança extrajudicial", lvl:"recom",
+  d:"E-mails, WhatsApp, cartas ou notificações extrajudiciais enviadas ao devedor."};}
+function LEGIT(kind){return {id:"legit", n:"Documentação que comprove a legitimidade "+(kind==="divida"?"da dívida":"dos títulos"), lvl:"aplic",
+  d:"Pedidos de compra, ordens de serviço, contratos comerciais, orçamentos aprovados e outros documentos pertinentes."};}
+function COMPL(kind){return {id:"compl", num:3, title:"Documentos complementares", tip:"Reforçam a instrução do processo.",
+  items:[ DEMO(), COBR(), LEGIT(kind) ]};}
+
+const DATA = {
+  cheque:{
+    label:"Cobrança de cheque", ico:"🧾",
+    when:"Você tem o cheque em papel devolvido pelo banco.",
+    sections:[
+      { ...CESSAO_BASE,
+        items:[
+          CESSAO_BASE.items[0],
+          CESSAO_BASE.items[1],
+          {id:"notif", n:"Notificação do devedor sobre a cessão", lvl:"recom",
+           d:"Prova de que o emitente do cheque foi avisado de que a dívida passou para a securitizadora/FIDC (art. 290 do Código Civil)."},
+          CESSAO_BASE.items[2]
+        ]
+      },
+      { id:"cheque", num:2, title:"Documentos do cheque", tip:"O título em si e a prova da recusa de pagamento.",
+        items:[
+          {id:"original", n:"Cheque original (via física)", lvl:"obrig",
+           d:"A posse do cheque em papel é indispensável.",
+           tip:"<b>Atenção ao prazo:</b> para execução, o cheque deve estar dentro do prazo (cerca de 6 meses após o fim do prazo de apresentação). Se já passou, ainda é possível cobrar por ação monitória — envie assim mesmo."},
+          {id:"devolucao", n:"Comprovante de devolução pelo banco (alínea)", lvl:"obrig",
+           d:"Documento do banco com o motivo da recusa — alínea 11 (sem fundos), 12 (conta encerrada), 13 (conta inexistente), 21 (contraordem), etc."},
+          {id:"endosso", n:"Endosso no verso do cheque", lvl:"obrig",
+           d:"Carimbo ou assinatura no verso mostrando que o cheque foi transferido até a securitizadora/FIDC."},
+          {id:"protesto", n:"Instrumento de protesto", lvl:"recom",
+           d:"Certidão de protesto do cheque. Reforça a mora e é necessária para cobrar endossantes."}
+        ]
+      },
+      COMPL("titulos")
+    ]
+  },
+
+  duplicata:{
+    label:"Cobrança de duplicata", ico:"📄",
+    when:"O crédito vem de duplicata (mercantil ou de serviço) ligada a uma nota fiscal.",
+    sections:[
+      { ...CESSAO_BASE,
+        items:[ CESSAO_BASE.items[0], CESSAO_BASE.items[1],
+          {id:"pgto", n:"Comprovante de pagamento ao cedente (TED/boleto)", lvl:"recom",
+           d:"Comprovante de que a securitizadora/FIDC pagou pelo crédito adquirido."} ]
+      },
+      { id:"dup", num:2, title:"Documentos da duplicata", tip:"Provam o crédito e a entrega da mercadoria/serviço.",
+        items:[
+          {id:"copia", n:"Cópia das duplicatas", lvl:"obrig",
+           d:"Cópia das duplicatas. Se for duplicata virtual, envie o boleto bancário correspondente."},
+          {id:"nf", n:"Notas fiscais correspondentes (NF-e / NFS-e)", lvl:"obrig",
+           d:"Notas fiscais que deram origem às duplicatas — comprovam de onde vem a dívida."},
+          {id:"entrega", n:"Comprovante de entrega / canhoto assinado", lvl:"obrig",
+           d:"Canhoto da nota assinado por quem recebeu, DACTE/CT-e, AR dos Correios ou equivalente.",
+           tip:"<b>Indispensável</b> quando a duplicata <b>não tem aceite</b> do sacado. É o que prova que a mercadoria/serviço foi entregue."},
+          {id:"protesto", n:"Instrumento de protesto", lvl:"obrig",
+           d:"Certidão de protesto da duplicata. Para duplicata virtual, o protesto por indicação é suficiente (Súmula 248 do STJ)."},
+          {id:"aceite", n:"Aceite do sacado", lvl:"aplic",
+           d:"Se a duplicata tiver aceite assinado do sacado, ele dispensa o comprovante de entrega e o protesto para fins de execução."}
+        ]
+      },
+      { id:"compl", num:3, title:"Documentos complementares", tip:"Reforçam a instrução do processo.",
+        items:[
+          {id:"emails", n:"E-mails / mensagens de confirmação ou recusa dos títulos", lvl:"recom",
+           d:"Comunicações que mostrem ciência, aceitação ou recusa dos títulos pelo sacado."},
+          DEMO(), COBR(), LEGIT("titulos")
+        ]
+      }
+    ]
+  },
+
+  regresso:{
+    label:"Regresso contra o cedente", ico:"↩️",
+    when:"O sacado não pagou, os títulos não têm lastro ou houve devolução de mercadorias, e você cobra o cedente (coobrigação).",
+    motivos:true,
+    sections:[
+      { id:"contrato", num:1, title:"Contrato-mãe e aditivos", tip:"É o título executivo — a base da ação de regresso.",
+        items:[
+          {id:"contrato", n:"Contrato-mãe / cessão com cláusula de regresso", lvl:"obrig",
+           d:"Contrato principal com a cláusula de coobrigação/regresso expressa, assinado pelo cedente e por duas testemunhas (art. 784, III, do CPC)."},
+          {id:"aditivos", n:"Termos aditivos ao contrato-mãe", lvl:"obrig",
+           d:"Aditivos que alteraram o contrato principal. Também precisam de duas testemunhas."}
+        ]
+      },
+      { id:"operacoes", num:2, title:"Documentação das operações", tip:"Comprova os créditos objeto do regresso.",
+        items:[
+          {id:"bordero", n:"Borderôs / termos de cessão das operações", lvl:"obrig",
+           d:"Documentos que listam os títulos negociados em cada operação, com valores, datas e sacados."},
+          {id:"titulos", n:"Cópia dos títulos inadimplidos (duplicatas / cheques)", lvl:"obrig",
+           d:"Cópia dos títulos que o sacado não pagou e que deram causa ao regresso."},
+          {id:"nf", n:"Notas fiscais correspondentes aos títulos", lvl:"recom",
+           d:"NF-e / NFS-e que deram origem aos títulos inadimplidos."},
+          {id:"entrega", n:"Comprovantes de entrega / canhotos", lvl:"recom",
+           d:"Documentos que comprovam a entrega das mercadorias ou a prestação dos serviços."}
+        ]
+      },
+      { id:"prova", num:3, title:"Prova da inadimplência e do regresso", tip:"Demonstram o direito de cobrar o cedente.",
+        items:[
+          {id:"inad", n:"Prova da inadimplência do sacado", lvl:"obrig",
+           d:"Protesto dos títulos, comprovante de devolução de cheque ou cobrança ao sacado sem resposta."},
+          {id:"notif", n:"Notificação ao cedente sobre o exercício do regresso", lvl:"recom",
+           d:"Comunicação formal avisando o cedente da inadimplência do sacado e do regresso."},
+          {id:"pgtoOrig", n:"Comprovante de pagamento ao cedente na operação original", lvl:"recom",
+           d:"TED/boleto mostrando que a securitizadora/FIDC pagou ao cedente pelos créditos."}
+        ]
+      },
+      { id:"lastro", num:4, title:"Títulos sem lastro", motivo:"lastro",
+        tip:"Só se aplica quando os títulos são simulados/inexistentes.",
+        items:[
+          {id:"declara", n:"Declaração do sacado negando a operação", lvl:"obrig",
+           d:"E-mail, carta ou notificação do sacado dizendo que não comprou, não recebeu mercadoria ou não contratou o serviço."},
+          {id:"consulta", n:"Consulta ao sacado sobre a existência da operação", lvl:"recom",
+           d:"Registro de contato (e-mail, WhatsApp, telefone) em que o sacado nega ou desconhece a operação."},
+          {id:"bo", n:"Boletim de ocorrência (se houver fraude)", lvl:"aplic",
+           d:"B.O. relatando a emissão de duplicatas simuladas."},
+          {id:"nfcancel", n:"Prova de nota fiscal cancelada ou inidônea", lvl:"aplic",
+           d:"Consulta à SEFAZ mostrando cancelamento, inutilização ou irregularidade da NF-e."}
+        ]
+      },
+      { id:"devol", num:5, title:"Mercadorias devolvidas", motivo:"devolucao",
+        tip:"Só se aplica quando houve devolução das mercadorias.",
+        items:[
+          {id:"nfdev", n:"Nota fiscal de devolução emitida pelo sacado", lvl:"obrig",
+           d:"NF-e de devolução comprovando a devolução total ou parcial das mercadorias."},
+          {id:"recdev", n:"Comprovante de recebimento da devolução pelo cedente", lvl:"recom",
+           d:"Canhoto, protocolo ou documento mostrando que o cedente recebeu as mercadorias de volta."},
+          {id:"comdev", n:"Comunicação do sacado informando a devolução", lvl:"recom",
+           d:"E-mail, carta ou notificação do sacado avisando que devolveu as mercadorias ao cedente."},
+          {id:"laudo", n:"Relatório de conferência / laudo de avaria", lvl:"aplic",
+           d:"Se a devolução foi por defeito, documento que comprove o vício ou a não conformidade do produto."},
+          {id:"naosubst", n:"Prova de que o cedente não substituiu os títulos nem devolveu os valores", lvl:"recom",
+           d:"Comunicações ou extratos mostrando que o cedente foi cobrado a substituir os títulos e não o fez."}
+        ]
+      },
+      { id:"compl", num:6, title:"Documentos complementares", tip:"Reforçam a instrução do processo.",
+        items:[ DEMO(),
+          {id:"emails", n:"E-mails / mensagens entre as partes", lvl:"recom",
+           d:"Comunicações que comprovem a relação comercial, a ciência da operação e as tentativas de resolução."},
+          LEGIT("titulosop") ]
+      }
+    ]
+  },
+
+  confissao:{
+    label:"Confissão de dívida", ico:"✍️",
+    when:"Existe um instrumento em que o devedor reconhece a dívida e se compromete a pagar.",
+    sections:[
+      { id:"instr", num:1, title:"Instrumento de confissão de dívida", tip:"É o título executivo — a base da execução.",
+        items:[
+          {id:"confissao", n:"Instrumento de confissão de dívida (original ou cópia autenticada)", lvl:"obrig",
+           d:"Documento em que o devedor reconhece a dívida, com valor, condições e vencimento.",
+           tip:"<b>Precisa estar assinado por duas testemunhas</b> para ter força de título executivo (art. 784, III, do CPC)."},
+          {id:"adit", n:"Termos aditivos à confissão de dívida", lvl:"aplic",
+           d:"Aditivos que alteraram valor, prazo, condições ou garantias. Também precisam de duas testemunhas."},
+          {id:"nova", n:"Termo de renegociação / novação", lvl:"aplic",
+           d:"Se a dívida original foi renegociada com a emissão de um novo instrumento."}
+        ]
+      },
+      { id:"origem", num:2, title:"Origem da dívida", tip:"Mostram de onde veio a dívida confessada.",
+        items:[
+          {id:"contrato", n:"Contrato-mãe / contrato de cessão original", lvl:"obrig",
+           d:"Contrato que deu origem à relação comercial (cessão de créditos, fomento mercantil, etc.)."},
+          {id:"aditivos", n:"Termos aditivos ao contrato-mãe (com 2 testemunhas)", lvl:"obrig",
+           d:"Aditivos que alteraram o contrato principal."},
+          {id:"bordero", n:"Borderôs / termos de cessão das operações que originaram a dívida", lvl:"obrig",
+           d:"Documentos que listam os títulos que deram origem ao débito confessado."},
+          {id:"titulos", n:"Cópia dos títulos inadimplidos que originaram a confissão", lvl:"obrig",
+           d:"Duplicatas, cheques ou outros títulos cujo não pagamento levou à confissão."},
+          {id:"compdebito", n:"Demonstrativo da composição do débito confessado", lvl:"recom",
+           d:"Documento que mostra como se chegou ao valor total confessado (principal + juros + encargos)."}
+        ]
+      },
+      { id:"garantias", num:3, title:"Garantias vinculadas", tip:"Só se houver garantias prestadas na confissão.",
+        items:[
+          {id:"aval", n:"Termo de aval / fiança", lvl:"aplic",
+           d:"Garantia prestada por terceiro para o pagamento da dívida confessada."},
+          {id:"np", n:"Nota promissória vinculada à confissão", lvl:"aplic",
+           d:"Nota promissória emitida como garantia adicional."},
+          {id:"real", n:"Contrato de alienação fiduciária / penhor / hipoteca", lvl:"aplic",
+           d:"Garantia real vinculada à confissão, com registro no cartório competente."},
+          {id:"certreg", n:"Certidão de registro da garantia real", lvl:"aplic",
+           d:"Certidão do cartório de imóveis, DETRAN ou títulos e documentos comprovando o registro."}
+        ]
+      },
+      { id:"inadimpl", num:4, title:"Prova do inadimplemento", tip:"Demonstram o descumprimento da confissão.",
+        items:[
+          {id:"parcelas", n:"Demonstrativo de parcelas inadimplidas", lvl:"obrig",
+           d:"Relação das parcelas vencidas e não pagas, com datas e valores."},
+          {id:"notif", n:"Notificação / interpelação ao devedor", lvl:"recom",
+           d:"Comunicação formal constituindo o devedor em mora. Indispensável se a confissão não previr mora automática."},
+          {id:"protesto", n:"Comprovante de protesto da confissão de dívida", lvl:"aplic",
+           d:"Certidão de protesto do instrumento de confissão, se realizado."},
+          {id:"parciais", n:"Extratos / comprovantes de pagamentos parciais", lvl:"aplic",
+           d:"Se houve pagamentos parciais, extratos mostrando o que já foi quitado e o saldo restante."}
+        ]
+      },
+      { id:"compl", num:5, title:"Documentos complementares", tip:"Reforçam a instrução do processo.",
+        items:[ DEMO(),
+          {id:"emails", n:"E-mails / mensagens entre as partes", lvl:"recom",
+           d:"Comunicações que comprovem a relação comercial, a ciência da dívida e as tentativas de cobrança."},
+          LEGIT("divida") ]
+      }
+    ]
+  }
+};
+
+const MOTIVOS = [
+  {id:"inad", label:"Sacado não pagou (inadimplência)", base:true},
+  {id:"lastro", label:"Títulos sem lastro / simulados"},
+  {id:"devolucao", label:"Mercadorias devolvidas"}
+];
+
+const CREDORES = [
+  {id:"sec", t:"Securitizadora / FIDC", d:"Crédito adquirido por securitizadora (com CNPJ) ou por fundo (FIDC) via cessão de crédito.", label:"Securitizadora / FIDC"},
+  {id:"fac", t:"Factoring / Fomento mercantil", d:"Crédito adquirido por sociedade de fomento mercantil (factoring) do faturizado (cliente).", label:"Factoring / Fomento mercantil"}
+];
+
+/* Adapta a terminologia da lista conforme o credor da pasta aberta. */
+function T(s){
+  if(!pasta || pasta.credor !== "fac" || !s) return s;
+  return s
+    .replaceAll("Securitizadora / FIDC","Factoring / Fomento mercantil")
+    .replaceAll("securitizadora/FIDC","factoring")
+    .replaceAll("Contrato de cessão de crédito","Contrato de fomento mercantil")
+    .replaceAll("contrato de cessão original","contrato de fomento mercantil original")
+    .replaceAll("cessão com cláusula de regresso","fomento mercantil com cláusula de regresso")
+    .replaceAll("operação de cessão","operação de fomento mercantil")
+    .replaceAll("Cedente","Faturizado")
+    .replaceAll("cedente","faturizado");
+}
+
+/* =========================================================================
+   2. NOME DE PROTOCOLO
+      O arquivo sobe já batizado no padrão do escritório (skill
+      protocolo-documentos). A NUMERAÇÃO não entra aqui de propósito: ela só
+      fecha no protocolo, quando a petição inicial e a procuração entram na
+      frente. Aqui gravamos o nome descritivo e a ordem de conferência.
+   ========================================================================= */
+const PROTO = {
+  "cessao:contrato":"Contrato de Cessão de Crédito",
+  "cessao:aditivos":"Termos Aditivos ao Contrato de Cessão",
+  "cessao:notif":"Notificação da Cessão ao Devedor",
+  "cessao:pgto":"Comprovante de Pagamento ao Cedente",
+
+  "cheque:original":"Cheque",
+  "cheque:devolucao":"Comprovante de Devolução Bancária",
+  "cheque:endosso":"Endosso do Cheque",
+  "cheque:protesto":"Instrumento de Protesto",
+
+  "dup:copia":"Duplicata",
+  "dup:nf":"Nota Fiscal",
+  "dup:entrega":"Comprovante de Entrega",
+  "dup:protesto":"Instrumento de Protesto",
+  "dup:aceite":"Aceite do Sacado",
+
+  "contrato:contrato":"Contrato de Cessão com Cláusula de Regresso",
+  "contrato:aditivos":"Termos Aditivos ao Contrato",
+  "operacoes:bordero":"Borderô de Cessão",
+  "operacoes:titulos":"Títulos Inadimplidos",
+  "operacoes:nf":"Notas Fiscais dos Títulos",
+  "operacoes:entrega":"Comprovantes de Entrega",
+  "prova:inad":"Prova da Inadimplência do Sacado",
+  "prova:notif":"Notificação ao Cedente",
+  "prova:pgtoOrig":"Comprovante de Pagamento ao Cedente",
+  "lastro:declara":"Declaração do Sacado",
+  "lastro:consulta":"Consulta ao Sacado",
+  "lastro:bo":"Boletim de Ocorrência",
+  "lastro:nfcancel":"Comprovante de Cancelamento da Nota Fiscal",
+  "devol:nfdev":"Nota Fiscal de Devolução",
+  "devol:recdev":"Comprovante de Recebimento da Devolução",
+  "devol:comdev":"Comunicação de Devolução",
+  "devol:laudo":"Laudo de Conferência",
+  "devol:naosubst":"Prova da Não Substituição dos Títulos",
+
+  "instr:confissao":"Instrumento de Confissão de Dívida",
+  "instr:adit":"Termos Aditivos à Confissão de Dívida",
+  "instr:nova":"Termo de Renegociação",
+  "origem:contrato":"Contrato de Cessão de Crédito",
+  "origem:aditivos":"Termos Aditivos ao Contrato",
+  "origem:bordero":"Borderô de Cessão",
+  "origem:titulos":"Títulos Inadimplidos",
+  "origem:compdebito":"Composição do Débito Confessado",
+  "garantias:aval":"Termo de Aval",
+  "garantias:np":"Nota Promissória",
+  "garantias:real":"Contrato de Garantia Real",
+  "garantias:certreg":"Certidão de Registro da Garantia",
+  "inadimpl:parcelas":"Demonstrativo de Parcelas Inadimplidas",
+  "inadimpl:notif":"Notificação ao Devedor",
+  "inadimpl:protesto":"Instrumento de Protesto",
+  "inadimpl:parciais":"Comprovantes de Pagamentos Parciais",
+
+  "compl:demo":"Demonstrativo do Débito",
+  "compl:cobranca":"Comunicações de Cobrança Extrajudicial",
+  "compl:legit":"Documentos da Relação Comercial",
+  "compl:emails":"Comunicações entre as Partes"
+};
+function nomeProtocolo(secId, itId, fallback){
+  return PROTO[secId+":"+itId] || String(fallback||"Documento").replace(/[\\/:*?"<>|]/g,"").slice(0,70);
+}
+
+/* =========================================================================
+   3. FUNIL
+   ========================================================================= */
+const ETAPAS = [
+  {id:"preenchendo", nome:"Preenchendo",          cor:"#98a1ad"},
+  {id:"enviado",     nome:"Enviado pelo cliente", cor:"#2f6f9e"},
+  {id:"conferencia", nome:"Em conferência",       cor:"#b9a46a"},
+  {id:"revisao",     nome:"Em revisão",           cor:"#6b4fa0"},
+  {id:"pronto",      nome:"Pronto para protocolo",cor:"#1e6b3a"},
+  {id:"protocolado", nome:"Protocolado",          cor:"#1b2a4a"}
+];
+const etapaIdx  = id => ETAPAS.findIndex(e => e.id === id);
+const etapaInfo = id => ETAPAS.find(e => e.id === id) || ETAPAS[0];
+
+/* =========================================================================
+   4. ESTADO E UTILITÁRIOS
+   ========================================================================= */
+let sb = null;
+let eu = null;              // {user_id, nome, papel, cliente_id}
+let clientes = [];
+let pastas = [];            // lista
+let pasta = null;           // pasta aberta
+let itens = [];             // itens da pasta aberta
+let arquivos = [];          // arquivos da pasta aberta
+let notas = [];             // anotações internas da pasta aberta
+let busca = "";
+let salvandoTimer = null;
+
+const esc = s => String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const ehEscritorio = () => eu && eu.papel === "escritorio";
+const nomeCliente = id => (clientes.find(c=>c.id===id)||{}).nome || id;
+const brl = d => d ? String(d).slice(0,10).split("-").reverse().join("/") : "—";
+const kb = n => !n ? "" : n < 1048576 ? Math.round(n/1024)+" KB" : (n/1048576).toFixed(1)+" MB";
+const ext = nome => { const p = String(nome).split("."); return p.length>1 ? "."+p.pop().toLowerCase() : ""; };
+const aviso = (txt,tipo="inf") => document.getElementById("avisoBox").innerHTML =
+  txt ? `<div class="aviso ${tipo}"><span>${tipo==="err"?"⚠":tipo==="ok"?"✓":"ℹ"}</span><div>${txt}</div></div>` : "";
+
+function confirmar(msg, rotuloSim, aoSim, extraHTML){
+  const bg = document.getElementById("modalBg");
+  const sim = document.getElementById("modalSim"), nao = document.getElementById("modalNao");
+  document.getElementById("modalMsg").textContent = msg;
+  document.getElementById("modalExtra").innerHTML = extraHTML || "";
+  sim.textContent = rotuloSim || "Confirmar"; nao.style.display = "";
+  bg.classList.add("show");
+  function fechar(){ bg.classList.remove("show"); sim.onclick=null; nao.onclick=null; bg.onclick=null; }
+  sim.onclick = () => { const cx=document.querySelector("#modalExtra textarea,#modalExtra input"); const v=cx?cx.value:null; fechar(); if(aoSim) aoSim(v); };
+  nao.onclick = fechar;
+  bg.onclick = e => { if(e.target===bg) fechar(); };
+  const cx = document.querySelector("#modalExtra textarea,#modalExtra input"); if(cx) cx.focus();
+}
+function informar(msg){
+  const bg = document.getElementById("modalBg");
+  const sim = document.getElementById("modalSim"), nao = document.getElementById("modalNao");
+  document.getElementById("modalMsg").textContent = msg;
+  document.getElementById("modalExtra").innerHTML = "";
+  nao.style.display = "none"; sim.textContent = "Entendi";
+  bg.classList.add("show");
+  function fechar(){ bg.classList.remove("show"); sim.onclick=null; bg.onclick=null; nao.style.display=""; }
+  sim.onclick = fechar;
+  bg.onclick = e => { if(e.target===bg) fechar(); };
+}
+
+/* =========================================================================
+   5. ENTRADA
+   ========================================================================= */
+async function iniciar(){
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const { data:{ session } } = await sb.auth.getSession();
+  sb.auth.onAuthStateChange(ev => { if(ev === "SIGNED_OUT") location.reload(); });
+  document.getElementById("carregando").classList.add("oculto");
+  session ? await entrar() : mostrarLogin();
+}
+
+function mostrarLogin(){
+  document.getElementById("telaLogin").classList.remove("oculto");
+  document.getElementById("app").classList.add("oculto");
+  document.getElementById("email").focus();
+}
+
+document.getElementById("formLogin").addEventListener("submit", async e => {
+  e.preventDefault();
+  const bt = document.getElementById("btEntrar"), err = document.getElementById("loginErro");
+  bt.disabled = true; bt.textContent = "Entrando…"; err.style.display = "none";
+  const { error } = await sb.auth.signInWithPassword({
+    email: document.getElementById("email").value.trim(),
+    password: document.getElementById("senha").value
+  });
+  if(error){
+    err.textContent = "E-mail ou senha inválidos.";
+    err.style.display = "block";
+    bt.disabled = false; bt.textContent = "Entrar";
+    document.getElementById("senha").value = "";
+    return;
+  }
+  await entrar();
+});
+
+async function entrar(){
+  // Quem sou eu vem do BANCO, nunca da tela.
+  const { data:perfil, error } = await sb.from("perfis").select("*").maybeSingle();
+  if(error || !perfil){
+    document.getElementById("telaLogin").classList.remove("oculto");
+    const err = document.getElementById("loginErro");
+    err.innerHTML = "Este usuário ainda não tem perfil vinculado.<br>Procure o escritório.";
+    err.style.display = "block";
+    document.getElementById("btEntrar").disabled = false;
+    document.getElementById("btEntrar").textContent = "Entrar";
+    await sb.auth.signOut();
+    return;
+  }
+  eu = perfil;
+
+  const { data:cls } = await sb.from("clientes").select("id,nome").eq("ativo",true).order("nome");
+  clientes = cls || [];
+
+  document.getElementById("telaLogin").classList.add("oculto");
+  document.getElementById("app").classList.remove("oculto");
+  document.getElementById("quemNome").textContent = eu.nome;
+  document.getElementById("quemSelo").textContent = ehEscritorio() ? "ESCRITÓRIO" : "CLIENTE";
+
+  // Tempo real: qualquer mudança relevante repinta a tela, dos dois lados.
+  sb.channel("portal-vivo")
+    .on("postgres_changes", {event:"*", schema:"public", table:"pastas"},   aoMudar)
+    .on("postgres_changes", {event:"*", schema:"public", table:"itens"},    aoMudar)
+    .on("postgres_changes", {event:"*", schema:"public", table:"arquivos"}, aoMudar)
+    .subscribe();
+
+  await carregarLista();
+}
+
+let enviando = false;   // trava o repinte enquanto um upload está em curso
+function aoMudar(){ if(enviando) return; pasta ? recarregarPasta() : carregarLista(); }
+document.getElementById("btSair").onclick = async () => { await sb.auth.signOut(); };
+
+/* =========================================================================
+   6. LISTA DE PASTAS
+   ========================================================================= */
+async function carregarLista(){
+  const { data, error } = await sb.from("pastas").select("*").order("atualizado_em",{ascending:false});
+  if(error){ aviso("Não foi possível carregar as pastas. "+esc(error.message),"err"); return; }
+  pastas = data || [];
+
+  // Um contador de arquivos por pasta, para a lista mostrar quanto já chegou.
+  const { data:arqs } = await sb.from("arquivos").select("pasta_id");
+  const conta = {};
+  (arqs||[]).forEach(a => conta[a.pasta_id] = (conta[a.pasta_id]||0) + 1);
+  pastas.forEach(p => p._arqs = conta[p.id] || 0);
+
+  aviso("");
+  document.getElementById("telaPasta").classList.add("oculto");
+  document.getElementById("telaLista").classList.remove("oculto");
+  document.getElementById("btNova").classList.remove("oculto");
+  document.getElementById("visaoEscritorio").classList.toggle("oculto", !ehEscritorio());
+  document.getElementById("visaoCliente").classList.toggle("oculto", ehEscritorio());
+  ehEscritorio() ? pintarBoard() : pintarCliente();
+}
+
+function pintarCliente(){
+  const el = document.getElementById("listaCliente");
+  if(!pastas.length){
+    el.innerHTML = `<div class="vazio">Você ainda não abriu nenhuma pasta.<br>
+      Clique em <b>+ Nova pasta</b> para começar um caso.</div>`;
+    return;
+  }
+  el.innerHTML = pastas.map(p => {
+    const e = etapaInfo(p.etapa);
+    const d = DATA[p.tipo];
+    return `<div class="pasta" data-id="${p.id}">
+      <div class="ico">${d ? d.ico : "📁"}</div>
+      <div class="info">
+        <span class="ref">${esc(p.referencia || "Pasta sem identificação")}</span>
+        <div class="met">${d ? esc(d.label) : "Tipo de cobrança ainda não escolhido"}
+          · ${p._arqs} arquivo(s) · atualizada em ${brl(p.atualizado_em)}</div>
+      </div>
+      <div class="dir"><span class="etq" style="background:${e.cor}">${e.nome}</span></div>
+    </div>`;
+  }).join("");
+  el.querySelectorAll(".pasta").forEach(n => n.onclick = () => abrirPasta(n.dataset.id));
+}
+
+function pintarBoard(){
+  const t = busca.trim().toLowerCase();
+  const filtradas = !t ? pastas : pastas.filter(p =>
+    [p.referencia, nomeCliente(p.cliente_id), p.processo].join(" ").toLowerCase().includes(t));
+
+  document.getElementById("board").innerHTML = ETAPAS.map(e => {
+    const doGrupo = filtradas.filter(p => p.etapa === e.id);
+    return `<div class="col">
+      <h3><span class="pt" style="background:${e.cor}"></span>${e.nome}<span class="qt">${doGrupo.length}</span></h3>
+      ${doGrupo.map(p => `<div class="mini" data-id="${p.id}">
+        <b>${esc(p.referencia || "Pasta sem identificação")}</b>
+        <span>${esc(nomeCliente(p.cliente_id))}</span>
+        <span>${DATA[p.tipo] ? esc(DATA[p.tipo].label) : "tipo não escolhido"} · ${p._arqs} arquivo(s)</span>
+      </div>`).join("") || `<div style="font-size:12px;color:#98a1ad;padding:4px 2px">—</div>`}
+    </div>`;
+  }).join("");
+  document.getElementById("board").querySelectorAll(".mini").forEach(n => n.onclick = () => abrirPasta(n.dataset.id));
+}
+
+document.getElementById("busca").oninput = e => { busca = e.target.value; pintarBoard(); };
+
+/* ---- nova pasta ---- */
+document.getElementById("btNova").onclick = () => {
+  const opcoes = ehEscritorio()
+    ? `<div class="campo" style="margin-top:12px"><label>Cliente</label><select id="novoCliente">
+         ${clientes.map(c=>`<option value="${esc(c.id)}">${esc(c.nome)}</option>`).join("")}</select></div>`
+    : "";
+  confirmar("Como este caso deve ser identificado? (ex.: Sacado João da Silva / Operação 1234)","Abrir pasta",
+    async () => {
+      const ref = (document.getElementById("novaRef")||{}).value || "";
+      const cli = ehEscritorio() ? (document.getElementById("novoCliente")||{}).value : eu.cliente_id;
+      if(!cli){ informar("Seu usuário não está vinculado a nenhum cliente. Procure o escritório."); return; }
+      const { data, error } = await sb.from("pastas")
+        .insert({cliente_id: cli, referencia: ref.trim(), etapa:"preenchendo", criado_por: eu.user_id})
+        .select().single();
+      if(error){ informar("Não foi possível abrir a pasta: "+error.message); return; }
+      await abrirPasta(data.id);
+    },
+    `<div class="campo" style="margin-top:12px"><input id="novaRef" placeholder="Identificação do caso"></div>${opcoes}`);
+};
+
+/* =========================================================================
+   7. PASTA ABERTA
+   ========================================================================= */
+async function abrirPasta(id){
+  const { data, error } = await sb.from("pastas").select("*").eq("id",id).maybeSingle();
+  if(error || !data){ aviso("Pasta não encontrada.","err"); return; }
+  pasta = data;
+  await recarregarPasta(true);
+}
+
+async function recarregarPasta(primeira){
+  if(!pasta) return;
+  if(!primeira){
+    const { data } = await sb.from("pastas").select("*").eq("id",pasta.id).maybeSingle();
+    if(!data){ pasta = null; return carregarLista(); }
+    pasta = data;
+  }
+  const [ri, ra] = await Promise.all([
+    sb.from("itens").select("*").eq("pasta_id",pasta.id),
+    sb.from("arquivos").select("*").eq("pasta_id",pasta.id).order("enviado_em")
+  ]);
+  itens = ri.data || [];
+  arquivos = ra.data || [];
+  notas = [];
+  if(ehEscritorio()){
+    const rn = await sb.from("pastas_notas").select("*").eq("pasta_id",pasta.id).order("criado_em",{ascending:false});
+    notas = rn.data || [];
+  }
+  document.getElementById("telaLista").classList.add("oculto");
+  document.getElementById("btNova").classList.add("oculto");
+  document.getElementById("telaPasta").classList.remove("oculto");
+  pintarPasta();
+}
+
+function fecharPasta(){ pasta = null; carregarLista(); }
+
+/* O cliente só mexe enquanto a pasta está sendo preenchida. */
+const podeEditar   = () => pasta && (ehEscritorio() || pasta.etapa === "preenchendo");
+const podeAnexar   = () => pasta && (ehEscritorio() || pasta.etapa === "preenchendo");
+
+function itemDe(chave){ return itens.find(i => i.chave === chave); }
+function arquivosDe(itemId){ return arquivos.filter(a => a.item_id === itemId); }
+
+/* Quais seções aparecem: no regresso, as de lastro e devolução dependem do motivo. */
+function secoesVisiveis(){
+  const d = DATA[pasta.tipo];
+  if(!d) return [];
+  const motivos = Array.isArray(pasta.motivos) ? pasta.motivos : ["inad"];
+  return d.sections.filter(s => !s.motivo || motivos.includes(s.motivo));
+}
+
+function situacaoDe(chave){
+  const it = itemDe(chave);
+  if(!it) return "pendente";
+  if(it.situacao === "enviado" && !arquivosDe(it.id).length && !it.obs_cliente) return "pendente";
+  return it.situacao;
+}
+
+function pintarPasta(){
+  const el = document.getElementById("telaPasta");
+  const d = DATA[pasta.tipo];
+  const et = etapaInfo(pasta.etapa);
+  const edit = podeEditar();
+
+  let html = `<button class="voltar" id="btVoltar">← Voltar para a lista</button>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <h1 class="titulo-pg" style="flex:1;min-width:220px">${esc(pasta.referencia || "Pasta sem identificação")}</h1>
+      <span class="etq" style="background:${et.cor}">${et.nome}</span>
+      ${pasta.tipo ? `<button class="bt" id="btRelatorio" title="Gera o relatório do checklist em PDF, com a situação de cada documento">Relatório (PDF)</button>` : ""}
+    </div>
+    <p class="sub-pg">${esc(nomeCliente(pasta.cliente_id))}${pasta.processo?" · processo "+esc(pasta.processo):""}
+      · aberta em ${brl(pasta.criado_em)}</p>
+
+    <div class="trilha">${ETAPAS.map((e,i)=>{
+      const at = etapaIdx(pasta.etapa);
+      return `<div class="tpasso ${i===at?"on":i<at?"feito":""}">${e.nome}</div>`;
+    }).join("")}</div>`;
+
+  /* ---- identificação ---- */
+  html += `<div class="card">
+    <h2 class="block">Identificação do caso</h2>
+    <div class="grid2">
+      <div class="campo"><label>Quem executar / cobrar</label>
+        <input id="fRef" value="${esc(pasta.referencia||"")}" ${edit?"":"disabled"} placeholder="Ex.: Sacado João da Silva / Operação 1234"></div>
+      <div class="campo"><label>Responsável pelo envio</label>
+        <input id="fContato" value="${esc(pasta.contato||"")}" ${edit?"":"disabled"} placeholder="Nome / e-mail / telefone"></div>
+    </div>
+  </div>`;
+
+  /* ---- natureza do credor ---- */
+  html += `<div class="card">
+    <h2 class="block">Natureza do credor</h2>
+    <div class="pick-grid">${CREDORES.map(c => `
+      <button class="pick ${pasta.credor===c.id?"active":""}" data-credor="${c.id}" ${edit?"":"disabled"}>
+        <span class="dot"></span><span><span class="t">${esc(c.t)}</span><span class="d">${esc(c.d)}</span></span>
+      </button>`).join("")}</div>
+  </div>`;
+
+  /* ---- tipo de cobrança ---- */
+  html += `<div class="card">
+    <h2 class="block">Qual é o tipo de cobrança?</h2>
+    <div class="pick-grid">${Object.entries(DATA).map(([k,v]) => `
+      <button class="pick ${pasta.tipo===k?"active":""}" data-tipo="${k}" ${edit?"":"disabled"}>
+        <span class="ico">${v.ico}</span><span><span class="t">${esc(T(v.label))}</span><span class="d">${esc(T(v.when))}</span></span>
+      </button>`).join("")}</div>
+  </div>`;
+
+  /* ---- motivos do regresso ---- */
+  if(pasta.tipo === "regresso"){
+    const motivos = Array.isArray(pasta.motivos) ? pasta.motivos : ["inad"];
+    html += `<div class="card">
+      <h2 class="block">Por que o regresso está sendo exercido? <span style="text-transform:none;letter-spacing:0;font-weight:400">(pode marcar mais de um)</span></h2>
+      <div class="mopts">${MOTIVOS.map(m => `
+        <${m.base?"div":"button"} class="mopt ${motivos.includes(m.id)?"on":""} ${m.base?"base":""}"
+          ${m.base||!edit?"":`data-motivo="${m.id}"`} ${!m.base&&!edit?"disabled":""}>
+          <span class="box"></span><span>${esc(T(m.label))}</span>
+        </${m.base?"div":"button"}>`).join("")}</div>
+    </div>`;
+  }
+
+  if(!d){
+    html += `<div class="vazio">Escolha o tipo de cobrança acima para ver a lista de documentos.</div>`;
+    el.innerHTML = html + rodapeDoc();
+    ligarEventosPasta();
+    return;
+  }
+
+  /* ---- progresso ---- */
+  const secoes = secoesVisiveis();
+  let total=0, prontos=0, obTot=0, obProntos=0; const faltam=[];
+  secoes.forEach(sec => sec.items.forEach(it => {
+    const chave = `${pasta.tipo}:${sec.id}:${it.id}`;
+    const s = situacaoDe(chave);
+    const ok = s === "enviado" || s === "conferido";
+    total++; if(ok) prontos++;
+    if(it.lvl === "obrig"){ obTot++; ok ? obProntos++ : faltam.push(T(it.n)); }
+  }));
+
+  html += `<div class="progress">
+    <div class="row1">
+      <div class="lead">Documentos — ${esc(T(d.label))} · ${esc((CREDORES.find(c=>c.id===pasta.credor)||CREDORES[0]).label)}</div>
+      <span class="chip obrig">Obrigatórios: <b>${obProntos}/${obTot}</b></span>
+      <span class="chip done">Enviados: <b>${prontos}/${total}</b></span>
+    </div>
+    <div class="bar"><i style="width:${total?Math.round(prontos/total*100):0}%"></i></div>
+    ${obTot && obProntos < obTot
+      ? `<div class="alert show">Ainda faltam <b>${obTot-obProntos}</b> documento(s) obrigatório(s): ${esc(faltam.join(" · "))}.</div>`
+      : obTot ? `<div class="alert show ok">✓ Todos os documentos obrigatórios foram enviados.</div>` : ""}
+  </div>`;
+
+  /* ---- seções e itens ---- */
+  secoes.forEach(sec => {
+    html += `<div class="section">
+      <h3><span class="num">${sec.num}</span>${esc(T(sec.title))}</h3>
+      ${sec.tip?`<div class="stip">${esc(T(sec.tip))}</div>`:""}
+      <div class="goldline"></div>`;
+    sec.items.forEach(it => {
+      const chave = `${pasta.tipo}:${sec.id}:${it.id}`;
+      const reg = itemDe(chave);
+      const s = situacaoDe(chave);
+      const arqs = reg ? arquivosDe(reg.id) : [];
+      html += `<div class="item">
+        <div class="corpo">
+          <div class="head">
+            <span class="nome">${esc(T(it.n))}</span>
+            <span class="badge ${LEVELS[it.lvl].cls}">${LEVELS[it.lvl].label}</span>
+            <span style="flex:1"></span>
+            <span class="sit ${s}">${{pendente:"Pendente",enviado:"Enviado",conferido:"Conferido",recusado:"Recusado"}[s]}</span>
+          </div>
+          <div class="desc">${T(it.d)}</div>
+          ${it.tip?`<div class="tip">${T(it.tip)}</div>`:""}
+          ${reg && reg.obs_cliente ? `<div class="tip" style="background:#eef4fb;color:#1c3d63">
+             <b>Observação do cliente:</b> ${esc(reg.obs_cliente)}</div>` : ""}
+          ${reg && reg.situacao === "recusado" && reg.motivo ? `<div class="motivo-recusa">
+             <b>O escritório pediu correção:</b> ${esc(reg.motivo)}</div>` : ""}
+          ${arqs.length ? `<div class="arqs">${arqs.map(a => `
+            <div class="arq">
+              <span class="nm">${esc(a.nome_protocolo || a.nome_original)}</span>
+              <span class="tam">${kb(a.tamanho)}</span>
+              <button data-baixar="${a.id}">baixar</button>
+              ${podeAnexar() ? `<button class="x" data-apagar="${a.id}">remover</button>` : ""}
+            </div>`).join("")}</div>` : ""}
+          <div class="prog-up oculto" id="up-${chave.replace(/[:]/g,"_")}"><i style="width:0%"></i></div>
+          <div class="acoes-item">
+            ${podeAnexar() ? `<button class="bt forte" data-anexar="${chave}"
+               data-sec="${sec.id}" data-it="${it.id}" data-nome="${esc(T(it.n))}" data-lvl="${it.lvl}">Anexar arquivo</button>` : ""}
+            ${podeAnexar() ? `<button class="bt" data-obs="${chave}"
+               data-sec="${sec.id}" data-it="${it.id}" data-nome="${esc(T(it.n))}" data-lvl="${it.lvl}">Observação</button>` : ""}
+            ${ehEscritorio() && arqs.length ? `<button class="bt ouro" data-conferir="${chave}">Conferir</button>` : ""}
+            ${ehEscritorio() && arqs.length ? `<button class="bt perigo" data-recusar="${chave}">Pedir correção</button>` : ""}
+          </div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  /* ---- observações do cliente ---- */
+  html += `<div class="card">
+    <h2 class="block">Observações para o escritório</h2>
+    <textarea id="fObs" ${edit?"":"disabled"} placeholder="${esc(T("Ex.: o cheque original está com o cedente; a nota fiscal será enviada até sexta; há garantidor além do devedor principal..."))}">${esc(pasta.obs||"")}</textarea>
+  </div>`;
+
+  /* ---- área do escritório ---- */
+  if(ehEscritorio()){
+    html += `<div class="card" style="border-color:var(--gold)">
+      <h2 class="block">Área do escritório</h2>
+      <div class="grid2">
+        <div class="campo"><label>Etapa</label><select id="fEtapa">
+          ${ETAPAS.map(e=>`<option value="${e.id}" ${pasta.etapa===e.id?"selected":""}>${e.nome}</option>`).join("")}
+        </select></div>
+        <div class="campo"><label>Número do processo (CNJ)</label>
+          <input id="fProcesso" value="${esc(pasta.processo||"")}" placeholder="0000000-00.0000.0.00.0000"></div>
+      </div>
+      <div class="acoes-item" style="margin-top:14px">
+        <button class="bt forte" id="btSalvarEsc">Salvar</button>
+        <button class="bt ouro" id="btPacote">Baixar pacote (.zip)</button>
+        <button class="bt perigo" id="btApagar">Excluir pasta</button>
+      </div>
+      <div class="campo" style="margin-top:18px"><label>Anotações internas — o cliente não vê</label>
+        <textarea id="fNota" placeholder="Anotação interna..."></textarea>
+        <button class="bt" id="btNota" style="margin-top:8px">Gravar anotação</button></div>
+      ${notas.length ? `<div style="margin-top:14px">${notas.map(n=>`
+        <div class="tip" style="background:var(--line-2);color:var(--ink)">
+          <span style="font-size:11.5px;color:var(--muted)">${brl(n.criado_em)}</span><br>${esc(n.texto)}</div>`).join("")}</div>` : ""}
+    </div>`;
+  }
+
+  /* ---- envio ao escritório ---- */
+  if(!ehEscritorio()){
+    if(pasta.etapa === "preenchendo"){
+      html += `<div class="rodape-acoes">
+        <button class="btg primary" id="btEnviar">Enviar ao escritório</button>
+        <button class="btg" id="btExcluir">Excluir esta pasta</button>
+      </div>
+      <p style="text-align:center;font-size:12.5px;color:var(--muted);margin-top:12px">
+        Depois de enviar, os documentos ficam travados para conferência. Se faltar algo, o escritório avisa por aqui.</p>`;
+    } else {
+      html += `<div class="vazio" style="border-style:solid;background:var(--ok-bg);border-color:#c3e4d1;color:#12603a">
+        Pasta entregue ao escritório em ${brl(pasta.enviado_em)}. Acompanhe o andamento pela trilha no topo.</div>`;
+    }
+  }
+
+  el.innerHTML = html + rodapeDoc();
+  ligarEventosPasta();
+}
+
+function rodapeDoc(){
+  return `<div class="rodape-doc"><b>Felipe Albuquerque Advocacia</b> — OAB/SC 33.415<br>
+    Fone/WhatsApp: (48) 3056-0800 · felipe@felipeadv.com.br</div>`;
+}
+
+/* =========================================================================
+   8. EVENTOS DA PASTA
+   ========================================================================= */
+function ligarEventosPasta(){
+  const el = document.getElementById("telaPasta");
+  document.getElementById("btVoltar").onclick = fecharPasta;
+
+  const salvarCampos = () => {
+    clearTimeout(salvandoTimer);
+    salvandoTimer = setTimeout(gravarPreenchimento, 600);
+  };
+  ["fRef","fContato","fObs"].forEach(id => { const n = el.querySelector("#"+id); if(n && !n.disabled) n.oninput = salvarCampos; });
+
+  el.querySelectorAll("[data-credor]").forEach(b => b.onclick = () => {
+    pasta.credor = b.dataset.credor; gravarPreenchimento(true);
+  });
+  el.querySelectorAll("[data-tipo]").forEach(b => b.onclick = () => {
+    if(pasta.tipo === b.dataset.tipo) return;
+    const trocando = pasta.tipo && (itens.length || arquivos.length);
+    const aplicar = () => { pasta.tipo = b.dataset.tipo; gravarPreenchimento(true); };
+    trocando
+      ? confirmar("Trocar o tipo de cobrança muda a lista de documentos. Os arquivos já enviados continuam na pasta, mas podem deixar de ter um item correspondente. Continuar?","Trocar", aplicar)
+      : aplicar();
+  });
+  el.querySelectorAll("[data-motivo]").forEach(b => b.onclick = () => {
+    const m = b.dataset.motivo;
+    const atual = Array.isArray(pasta.motivos) ? pasta.motivos.slice() : ["inad"];
+    pasta.motivos = atual.includes(m) ? atual.filter(x => x !== m) : atual.concat([m]);
+    gravarPreenchimento(true);
+  });
+
+  el.querySelectorAll("[data-anexar]").forEach(b => b.onclick = () => escolherArquivos(b.dataset));
+  el.querySelectorAll("[data-obs]").forEach(b => b.onclick = () => pedirObservacao(b.dataset));
+  el.querySelectorAll("[data-baixar]").forEach(b => b.onclick = () => baixar(b.dataset.baixar));
+  el.querySelectorAll("[data-apagar]").forEach(b => b.onclick = () => apagarArquivo(b.dataset.apagar));
+  el.querySelectorAll("[data-conferir]").forEach(b => b.onclick = () => julgar(b.dataset.conferir,"conferido"));
+  el.querySelectorAll("[data-recusar]").forEach(b => b.onclick = () => julgar(b.dataset.recusar,"recusado"));
+
+  const btEnviar = el.querySelector("#btEnviar");
+  if(btEnviar) btEnviar.onclick = enviarAoEscritorio;
+  const btExcluir = el.querySelector("#btExcluir");
+  if(btExcluir) btExcluir.onclick = excluirPasta;
+
+  const btSalvarEsc = el.querySelector("#btSalvarEsc");
+  if(btSalvarEsc) btSalvarEsc.onclick = salvarEscritorio;
+  const btNota = el.querySelector("#btNota");
+  if(btNota) btNota.onclick = gravarNota;
+  const btPacote = el.querySelector("#btPacote");
+  if(btPacote) btPacote.onclick = baixarPacote;
+  const btApagar = el.querySelector("#btApagar");
+  if(btApagar) btApagar.onclick = excluirPasta;
+  const btRelatorio = el.querySelector("#btRelatorio");
+  if(btRelatorio) btRelatorio.onclick = baixarRelatorio;
+}
+
+async function gravarPreenchimento(repintar){
+  const el = document.getElementById("telaPasta");
+  const val = id => { const n = el.querySelector("#"+id); return n ? n.value : null; };
+  if(val("fRef") !== null)     pasta.referencia = val("fRef");
+  if(val("fContato") !== null) pasta.contato    = val("fContato");
+  if(val("fObs") !== null)     pasta.obs        = val("fObs");
+
+  // O escritório escreve direto na tabela; o cliente passa pela função, que é
+  // quem valida por dentro se a pasta é dele e se ainda está em preenchimento.
+  // Sem essa separação, o escritório editaria a tela sem nada ser gravado
+  // depois que o cliente já tivesse enviado a pasta.
+  const campos = {
+    referencia: pasta.referencia || "",
+    contato: pasta.contato || null,
+    credor: pasta.credor,
+    tipo: pasta.tipo,
+    motivos: pasta.motivos || ["inad"],
+    obs: pasta.obs || null
+  };
+  const { error } = ehEscritorio()
+    ? await sb.from("pastas").update(campos).eq("id", pasta.id)
+    : await sb.rpc("salvar_preenchimento", {
+        p_pasta: pasta.id,
+        p_referencia: campos.referencia,
+        p_contato: campos.contato,
+        p_credor: campos.credor,
+        p_tipo: campos.tipo,
+        p_motivos: campos.motivos,
+        p_obs: campos.obs
+      });
+  if(error){ aviso("Não foi possível salvar: "+esc(error.message),"err"); return; }
+  aviso("");
+  if(repintar) pintarPasta();
+}
+
+/* ---- item ---- */
+async function garantirItem(ds){
+  const chave = ds.anexar || ds.obs || ds.chave;
+  let reg = itemDe(chave);
+  if(reg) return reg;
+  const { data, error } = await sb.from("itens").insert({
+    pasta_id: pasta.id, chave,
+    rotulo: ds.nome || "", nivel: ds.lvl || "aplic", situacao: "pendente"
+  }).select().single();
+  if(error){ aviso("Não foi possível registrar o item: "+esc(error.message),"err"); return null; }
+  itens.push(data);
+  return data;
+}
+
+/* ---- anexar ---- */
+let alvoUpload = null;
+function escolherArquivos(ds){
+  alvoUpload = ds;
+  const inp = document.getElementById("inputArquivo");
+  inp.value = "";
+  inp.click();
+}
+
+document.getElementById("inputArquivo").onchange = async e => {
+  const files = Array.from(e.target.files || []);
+  if(!files.length || !alvoUpload) return;
+  const ds = alvoUpload; alvoUpload = null;
+
+  const grandes = files.filter(f => f.size > 50 * 1024 * 1024);
+  if(grandes.length){
+    informar("Cada arquivo precisa ter no máximo 50 MB. Estes passaram do limite e não foram enviados: "
+      + grandes.map(f => f.name).join(", ") + ". Divida o PDF em partes e envie de novo.");
+  }
+  const enviar = files.filter(f => f.size <= 50 * 1024 * 1024);
+  if(!enviar.length) return;
+
+  const reg = await garantirItem(ds);
+  if(!reg) return;
+
+  const barra = document.getElementById("up-" + (ds.anexar||"").replace(/[:]/g,"_"));
+  if(barra) barra.classList.remove("oculto");
+
+  enviando = true;   // o tempo real não repinta a tela no meio do envio
+  const base = nomeProtocolo(ds.sec, ds.it, ds.nome);
+  let feitos = 0;
+  try{
+  for(const f of enviar){
+    const id = crypto.randomUUID();
+    const caminho = `${pasta.cliente_id}/${pasta.id}/${id}${ext(f.name)}`;
+    const up = await sb.storage.from("documentos").upload(caminho, f, {upsert:false, contentType: f.type || "application/octet-stream"});
+    if(up.error){ aviso("Falha ao enviar "+esc(f.name)+": "+esc(up.error.message),"err"); continue; }
+
+    const sufixo = enviar.length > 1 ? ` (${feitos+1})` : "";
+    const ins = await sb.from("arquivos").insert({
+      id, pasta_id: pasta.id, item_id: reg.id, caminho,
+      nome_original: f.name,
+      nome_protocolo: base + sufixo + ext(f.name),
+      ordem: ordemDoItem(ds.sec, ds.it),
+      tamanho: f.size, tipo_mime: f.type || null, enviado_por: eu.user_id
+    });
+    if(ins.error){
+      // não deixa arquivo órfão no armazenamento
+      await sb.storage.from("documentos").remove([caminho]);
+      aviso("Falha ao registrar "+esc(f.name)+": "+esc(ins.error.message),"err");
+      continue;
+    }
+    feitos++;
+    if(barra) barra.querySelector("i").style.width = Math.round(feitos/enviar.length*100)+"%";
+  }
+
+  if(feitos) await sb.from("itens").update({situacao:"enviado", motivo:null}).eq("id", reg.id);
+  }catch(err){
+    aviso("O envio foi interrompido: "+esc(err.message),"err");
+  }finally{
+    enviando = false;   // nunca deixa a tela travada, mesmo se algo falhar
+  }
+  await recarregarPasta();
+};
+
+function ordemDoItem(secId, itId){
+  const d = DATA[pasta.tipo];
+  if(!d) return 999;
+  let n = 0;
+  for(const sec of d.sections){
+    for(const it of sec.items){
+      n++;
+      if(sec.id === secId && it.id === itId) return n;
+    }
+  }
+  return 999;
+}
+
+/* ---- observação por item ---- */
+async function pedirObservacao(ds){
+  const reg = itemDe(ds.obs);
+  confirmar("Observação sobre “"+ds.nome+"”", "Gravar", async texto => {
+    const alvo = reg || await garantirItem(ds);
+    if(!alvo) return;
+    const t = (texto||"").trim();
+    const { error } = await sb.from("itens")
+      .update({obs_cliente: t || null, situacao: (t || arquivosDe(alvo.id).length) ? "enviado" : "pendente"})
+      .eq("id", alvo.id);
+    if(error){ aviso("Não foi possível gravar: "+esc(error.message),"err"); return; }
+    await recarregarPasta();
+  }, `<div class="campo" style="margin-top:12px">
+        <textarea id="obsTxt" placeholder="Ex.: o original está em poder do cedente; será entregue pessoalmente no escritório.">${esc(reg&&reg.obs_cliente||"")}</textarea>
+      </div>`);
+}
+
+/* ---- conferência (escritório) ---- */
+async function julgar(chave, veredicto){
+  const reg = itemDe(chave);
+  if(!reg) return;
+  if(veredicto === "conferido"){
+    const { error } = await sb.from("itens").update({situacao:"conferido", motivo:null}).eq("id", reg.id);
+    if(error) aviso("Não foi possível conferir: "+esc(error.message),"err");
+    return recarregarPasta();
+  }
+  confirmar("O que precisa ser corrigido neste documento? O cliente vai ler exatamente este texto.","Pedir correção",
+    async texto => {
+      const { error } = await sb.from("itens").update({situacao:"recusado", motivo:(texto||"").trim()||null}).eq("id", reg.id);
+      if(error){ aviso("Não foi possível registrar: "+esc(error.message),"err"); return; }
+      await recarregarPasta();
+      // Enquanto a pasta não estiver em "Preenchendo", o cliente não consegue
+      // anexar nada — o pedido de correção morreria na tela dele.
+      if(pasta.etapa !== "preenchendo"){
+        confirmar("Pedido registrado. Reabrir a pasta para o cliente corrigir? Enquanto ela estiver reaberta, ele volta a poder anexar e remover arquivos.",
+          "Reabrir para o cliente", async () => {
+            const r = await sb.from("pastas").update({etapa:"preenchendo"}).eq("id", pasta.id);
+            if(r.error){ aviso("Não foi possível reabrir: "+esc(r.error.message),"err"); return; }
+            await recarregarPasta();
+            aviso("Pasta reaberta. O cliente já pode corrigir.","ok");
+          });
+      }
+    },
+    `<div class="campo" style="margin-top:12px"><textarea id="motivoTxt" placeholder="Ex.: o canhoto está ilegível; reenviar digitalização colorida."></textarea></div>`);
+}
+
+/* ---- arquivos ---- */
+async function baixar(id){
+  const a = arquivos.find(x => x.id === id);
+  if(!a) return;
+  const { data, error } = await sb.storage.from("documentos").createSignedUrl(a.caminho, 60, {download: a.nome_protocolo || a.nome_original});
+  if(error){ aviso("Não foi possível gerar o link: "+esc(error.message),"err"); return; }
+  window.open(data.signedUrl, "_blank");
+}
+
+async function apagarArquivo(id){
+  const a = arquivos.find(x => x.id === id);
+  if(!a) return;
+  confirmar("Remover “"+(a.nome_protocolo||a.nome_original)+"” desta pasta?","Remover", async () => {
+    const r1 = await sb.storage.from("documentos").remove([a.caminho]);
+    if(r1.error){ aviso("Não foi possível remover o arquivo: "+esc(r1.error.message),"err"); return; }
+    const r2 = await sb.from("arquivos").delete().eq("id", id);
+    if(r2.error){ aviso("Arquivo removido, mas o registro permaneceu: "+esc(r2.error.message),"err"); }
+    const reg = itens.find(i => i.id === a.item_id);
+    if(reg && arquivosDe(reg.id).length <= 1 && !reg.obs_cliente){
+      await sb.from("itens").update({situacao:"pendente"}).eq("id", reg.id);
+    }
+    await recarregarPasta();
+  });
+}
+
+/* ---- envio ---- */
+function enviarAoEscritorio(){
+  const d = DATA[pasta.tipo];
+  if(!d){ informar("Escolha o tipo de cobrança antes de enviar."); return; }
+  let obTot=0, obProntos=0;
+  secoesVisiveis().forEach(sec => sec.items.forEach(it => {
+    if(it.lvl !== "obrig") return;
+    obTot++;
+    const s = situacaoDe(`${pasta.tipo}:${sec.id}:${it.id}`);
+    if(s === "enviado" || s === "conferido") obProntos++;
+  }));
+  const falta = obTot - obProntos;
+  const msg = falta
+    ? `Ainda faltam ${falta} documento(s) obrigatório(s). Você pode enviar assim mesmo — o escritório vai apontar o que precisar. Enviar agora?`
+    : "Todos os documentos obrigatórios foram anexados. Enviar a pasta ao escritório?";
+  confirmar(msg, "Enviar", async () => {
+    await gravarPreenchimento();
+    const { error } = await sb.rpc("enviar_pasta", {p_pasta: pasta.id});
+    if(error){ aviso("Não foi possível enviar: "+esc(error.message),"err"); return; }
+    await recarregarPasta();
+    aviso("Pasta enviada ao escritório. Você será avisado por aqui se faltar alguma coisa.","ok");
+  });
+}
+
+function excluirPasta(){
+  confirmar("Excluir esta pasta e todos os arquivos enviados nela? Não há como desfazer.","Excluir", async () => {
+    const caminhos = arquivos.map(a => a.caminho);
+    if(caminhos.length) await sb.storage.from("documentos").remove(caminhos);
+    const { error } = await sb.from("pastas").delete().eq("id", pasta.id);
+    if(error){ aviso("Não foi possível excluir: "+esc(error.message),"err"); return; }
+    pasta = null;
+    await carregarLista();
+  });
+}
+
+/* ---- escritório ---- */
+async function salvarEscritorio(){
+  const el = document.getElementById("telaPasta");
+  const etapa = el.querySelector("#fEtapa").value;
+  const processo = el.querySelector("#fProcesso").value.trim();
+  const campos = {etapa, processo: processo || null};
+  if(etapa === "protocolado" && !pasta.protocolo_em) campos.protocolo_em = new Date().toISOString().slice(0,10);
+  const { error } = await sb.from("pastas").update(campos).eq("id", pasta.id);
+  if(error){ aviso("Não foi possível salvar: "+esc(error.message),"err"); return; }
+  aviso("Alterações salvas.","ok");
+  await recarregarPasta();
+}
+
+async function gravarNota(){
+  const t = document.getElementById("fNota").value.trim();
+  if(!t) return;
+  const { error } = await sb.from("pastas_notas").insert({pasta_id: pasta.id, texto: t, autor: eu.user_id});
+  if(error){ aviso("Não foi possível gravar a anotação: "+esc(error.message),"err"); return; }
+  await recarregarPasta();
+}
+
+/* ---- pacote para protocolo ----
+   Baixa tudo num zip com os nomes já no padrão do escritório e uma RELAÇÃO
+   na ordem de conferência. A numeração sequencial NÃO vem aqui: ela é
+   atribuída no protocolo, quando a petição e a procuração entram na frente. */
+async function baixarPacote(){
+  if(!arquivos.length){ informar("Esta pasta ainda não tem nenhum arquivo."); return; }
+  const bt = document.getElementById("btPacote");
+  bt.disabled = true; bt.textContent = "Montando…";
+  try{
+    if(!window.JSZip){
+      await new Promise((ok,err) => {
+        const s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js";
+        s.onload = ok; s.onerror = () => err(new Error("não foi possível carregar o compactador"));
+        document.head.appendChild(s);
+      });
+    }
+    const zip = new JSZip();
+    const ordenados = arquivos.slice().sort((a,b) => (a.ordem||999) - (b.ordem||999) || a.enviado_em.localeCompare(b.enviado_em));
+    const usados = {};
+    const relacao = [];
+
+    // O relatório do checklist vai junto, na frente de tudo. Se o gerador de
+    // PDF não carregar, entra a versão HTML — o conteúdo é o mesmo.
+    bt.textContent = "Gerando relatório…";
+    try{
+      zip.file("00 - RELATORIO-CHECKLIST.pdf", await gerarRelatorioPDF());
+    }catch(e){
+      zip.file("00 - RELATORIO-CHECKLIST.html", montarRelatorioHTML());
+    }
+    bt.textContent = "Montando…";
+    for(const a of ordenados){
+      const { data, error } = await sb.storage.from("documentos").download(a.caminho);
+      if(error){ relacao.push(`[FALHOU] ${a.nome_protocolo || a.nome_original} — ${error.message}`); continue; }
+      let nome = a.nome_protocolo || a.nome_original;
+      usados[nome] = (usados[nome] || 0) + 1;
+      if(usados[nome] > 1){
+        const e = ext(nome);
+        nome = nome.slice(0, nome.length - e.length) + ` (${usados[nome]})` + e;
+      }
+      zip.file(nome, data);
+      relacao.push(nome);
+    }
+    zip.file("RELACAO.txt",
+      `Pasta: ${pasta.referencia || "sem identificação"}\r\n` +
+      `Cliente: ${nomeCliente(pasta.cliente_id)}\r\n` +
+      `Tipo: ${DATA[pasta.tipo] ? DATA[pasta.tipo].label : "não informado"}\r\n\r\n` +
+      `Documentos na ordem de conferência do checklist.\r\n` +
+      `A numeração sequencial do protocolo é atribuída depois, com a petição\r\n` +
+      `inicial e a procuração na frente (skill protocolo-documentos).\r\n\r\n` +
+      relacao.map((n,i) => `${i+1}. ${n}`).join("\r\n") + "\r\n");
+
+    const blob = await zip.generateAsync({type:"blob"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = (pasta.referencia || "pasta").replace(/[\\/:*?"<>|]/g,"").slice(0,60) + ".zip";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }catch(e){
+    informar("Não foi possível montar o pacote: " + e.message);
+  }finally{
+    bt.disabled = false; bt.textContent = "Baixar pacote (.zip)";
+  }
+}
+
+/* =========================================================================
+   8b. RELATÓRIO DO CHECKLIST (PDF)
+   Retrato fiel da pasta no momento da geração: identificação, progresso e,
+   documento por documento, situação, arquivos anexados, observações do
+   cliente e pedidos de correção. Não leva anotações internas — o cliente
+   também gera este relatório.
+   ========================================================================= */
+function agoraBR(){
+  const d = new Date(), p = n => String(n).padStart(2,"0");
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} às ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function nomeArquivoRelatorio(){
+  return "Relatorio-Checklist - " + (pasta.referencia || "pasta").replace(/[\\/:*?"<>|]/g,"").slice(0,60) + ".pdf";
+}
+
+function montarRelatorioHTML(){
+  const d = DATA[pasta.tipo];
+  const et = etapaInfo(pasta.etapa);
+  const credor = CREDORES.find(c=>c.id===pasta.credor) || CREDORES[0];
+  const SIT = {pendente:["Pendente","#8a5a00","#fff4dc"], enviado:["Enviado","#1c3d63","#e8f0fb"],
+               conferido:["Conferido","#12603a","#e3f5ea"], recusado:["Correção pedida","#8b1e1e","#fdeaea"]};
+  const secoes = d ? secoesVisiveis() : [];
+  let total=0, prontos=0, obTot=0, obProntos=0, conf=0, rec=0;
+  secoes.forEach(sec => sec.items.forEach(it => {
+    const s = situacaoDe(`${pasta.tipo}:${sec.id}:${it.id}`);
+    const ok = s === "enviado" || s === "conferido";
+    total++; if(ok) prontos++; if(s==="conferido") conf++; if(s==="recusado") rec++;
+    if(it.lvl === "obrig"){ obTot++; if(ok) obProntos++; }
+  }));
+  const motivos = pasta.tipo === "regresso"
+    ? (Array.isArray(pasta.motivos) ? pasta.motivos : ["inad"]).map(id => { const m = MOTIVOS.find(x=>x.id===id); return m ? T(m.label) : id; })
+    : [];
+
+  const linha = (k,v) => `<tr><th>${esc(k)}</th><td>${v}</td></tr>`;
+
+  let corpo = `
+  <div class="cab">
+    <div class="marca">Felipe Albuquerque Advocacia</div>
+    <div class="tit">Relatório do Checklist de Documentos</div>
+    <div class="sub">Gerado em ${agoraBR()} pelo Portal de Recebimento de Documentos</div>
+  </div>
+
+  <table class="ident">
+    ${linha("Caso / quem cobrar", esc(pasta.referencia || "sem identificação"))}
+    ${linha("Cliente", esc(nomeCliente(pasta.cliente_id)))}
+    ${linha("Responsável pelo envio", esc(pasta.contato || "—"))}
+    ${linha("Natureza do credor", esc(credor.label))}
+    ${linha("Tipo de cobrança", esc(d ? T(d.label) : "não informado"))}
+    ${motivos.length ? linha("Motivo do regresso", esc(motivos.join(" · "))) : ""}
+    ${linha("Etapa atual", `<span class="etq" style="background:${et.cor}">${esc(et.nome)}</span>`)}
+    ${pasta.processo ? linha("Processo", esc(pasta.processo)) : ""}
+    ${linha("Pasta aberta em", brl(pasta.criado_em))}
+    ${pasta.enviado_em ? linha("Enviada ao escritório em", brl(pasta.enviado_em)) : ""}
+  </table>
+
+  <div class="resumo">
+    <div class="box"><b>${obProntos}/${obTot}</b><span>obrigatórios enviados</span></div>
+    <div class="box"><b>${prontos}/${total}</b><span>documentos enviados</span></div>
+    <div class="box"><b>${conf}</b><span>conferidos pelo escritório</span></div>
+    <div class="box ${rec?"alerta":""}"><b>${rec}</b><span>com correção pedida</span></div>
+  </div>`;
+
+  if(!d){
+    corpo += `<p class="vazio">O tipo de cobrança ainda não foi escolhido; a lista de documentos ainda não existe.</p>`;
+  }
+
+  secoes.forEach(sec => {
+    corpo += `<div class="secao"><h2><span>${sec.num}</span>${esc(T(sec.title))}</h2>
+      <table class="itens">
+        <thead><tr><th style="width:44%">Documento</th><th style="width:12%">Exigência</th><th style="width:14%">Situação</th><th>Arquivos e observações</th></tr></thead><tbody>`;
+    sec.items.forEach(it => {
+      const chave = `${pasta.tipo}:${sec.id}:${it.id}`;
+      const reg = itemDe(chave);
+      const s = situacaoDe(chave);
+      const arqs = reg ? arquivosDe(reg.id) : [];
+      const [sl, sc, sfundo] = SIT[s] || SIT.pendente;
+      let dir = arqs.map(a => `<div class="arq">📎 ${esc(a.nome_protocolo || a.nome_original)} <i>${kb(a.tamanho)} · ${brl(a.enviado_em)}</i></div>`).join("");
+      if(reg && reg.obs_cliente) dir += `<div class="obs"><b>Observação do cliente:</b> ${esc(reg.obs_cliente)}</div>`;
+      if(reg && reg.situacao === "recusado" && reg.motivo) dir += `<div class="rec"><b>Correção pedida:</b> ${esc(reg.motivo)}</div>`;
+      if(!dir) dir = `<span class="nada">—</span>`;
+      corpo += `<tr>
+        <td><div class="nm">${esc(T(it.n))}</div><div class="ds">${T(it.d)}</div></td>
+        <td>${LEVELS[it.lvl].label}</td>
+        <td><span class="sit" style="color:${sc};background:${sfundo}">${sl}</span></td>
+        <td>${dir}</td>
+      </tr>`;
+    });
+    corpo += `</tbody></table></div>`;
+  });
+
+  corpo += `<div class="secao"><h2><span>✎</span>Observações gerais do cliente</h2>
+    <p class="obsger">${pasta.obs ? esc(pasta.obs).replace(/\n/g,"<br>") : "<i>Nenhuma.</i>"}</p></div>
+  <div class="rod">Felipe Albuquerque Advocacia — OAB/SC 33.415 · Fone/WhatsApp: (48) 3056-0800 · felipe@felipeadv.com.br<br>
+    Este relatório reflete a situação da pasta no momento em que foi gerado.</div>`;
+
+  // O <style> fica DENTRO do .rel de propósito: o gerador de PDF clona só o
+  // elemento, e um estilo no <head> se perderia no clone.
+  const estilo = `<style>
+  @page{ size:A4; margin:14mm 12mm; }
+  .rel, .rel *{ box-sizing:border-box; }
+  .rel{ font-family:Georgia,"Times New Roman",serif; color:#1f2733; font-size:11.5px; line-height:1.45; width:720px; margin:0; padding:0; background:#fff; }
+  .cab{ border-bottom:2px solid #b0893c; padding-bottom:8px; margin-bottom:12px; }
+  .marca{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#b0893c; font-weight:700; }
+  .tit{ font-size:20px; font-weight:700; color:#1b2a4a; margin-top:4px; }
+  .sub{ font-size:11px; color:#5b6675; margin-top:2px; }
+  .rel table{ border-collapse:collapse; width:100%; }
+  .rel td, .rel th{ overflow-wrap:anywhere; word-break:break-word; }
+  .ident th{ text-align:left; width:34%; font-weight:700; color:#1b2a4a; padding:4px 8px 4px 0; vertical-align:top; border-bottom:1px solid #eef1f5; }
+  .ident td{ padding:4px 0; border-bottom:1px solid #eef1f5; }
+  .etq{ display:inline-block; color:#fff; font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px; letter-spacing:.04em; }
+  .resumo{ display:flex; gap:8px; margin:12px 0 4px; }
+  .box{ flex:1 1 0; min-width:0; border:1px solid #e4e7ec; border-radius:6px; padding:8px 6px; text-align:center; page-break-inside:avoid; overflow-wrap:anywhere; }
+  .box b{ display:block; font-size:18px; color:#1b2a4a; }
+  .box span{ font-size:10px; color:#5b6675; text-transform:uppercase; letter-spacing:.04em; }
+  .box.alerta b{ color:#8b1e1e; }
+  .secao{ margin-top:14px; }
+  .secao h2{ font-size:13px; color:#1b2a4a; margin:0 0 6px; padding-bottom:4px; border-bottom:1px solid #b0893c; page-break-after:avoid; }
+  .secao h2 span{ display:inline-block; min-width:20px; height:20px; line-height:20px; text-align:center; background:#1b2a4a; color:#fff; border-radius:50%; font-size:11px; margin-right:8px; }
+  .itens th{ text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:#5b6675; background:#f4f6f9; padding:5px 6px; border-bottom:1px solid #e4e7ec; }
+  .itens td{ padding:6px; border-bottom:1px solid #eef1f5; vertical-align:top; }
+  .itens tr{ page-break-inside:avoid; }
+  .nm{ font-weight:700; color:#1b2a4a; }
+  .ds{ font-size:10px; color:#5b6675; margin-top:2px; }
+  .sit{ display:inline-block; font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; }
+  .arq{ font-size:10.5px; margin:1px 0; }
+  .arq i{ color:#5b6675; font-style:normal; font-size:9.5px; }
+  .obs{ font-size:10.5px; background:#eef4fb; color:#1c3d63; padding:4px 6px; border-radius:4px; margin-top:4px; }
+  .rec{ font-size:10.5px; background:#fdeaea; color:#8b1e1e; padding:4px 6px; border-radius:4px; margin-top:4px; }
+  .nada{ color:#a0a8b3; }
+  .obsger{ background:#f4f6f9; padding:8px 10px; border-radius:6px; margin:0; }
+  .vazio{ border:1px dashed #e4e7ec; padding:14px; text-align:center; color:#5b6675; }
+  .rod{ margin-top:18px; padding-top:8px; border-top:1px solid #e4e7ec; font-size:9.5px; color:#5b6675; text-align:center; }
+</style>`;
+
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">
+<title>Relatório do Checklist — ${esc(pasta.referencia || "pasta")}</title>
+<style>html,body{margin:0;padding:0;background:#fff}</style></head>
+<body><div class="rel">${estilo}${corpo}</div></body></html>`;
+}
+
+/* Gera o PDF no navegador. Devolve um Blob. Lança erro se o gerador não carregar. */
+async function gerarRelatorioPDF(){
+  if(!window.html2pdf){
+    await new Promise((ok,err) => {
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js";
+      s.onload = ok; s.onerror = () => err(new Error("não foi possível carregar o gerador de PDF"));
+      document.head.appendChild(s);
+    });
+  }
+  // Renderiza o relatório num iframe fora da tela, para o CSS do portal não
+  // interferir e o resultado ser igual ao que a impressão daria.
+  const fr = document.createElement("iframe");
+  fr.style.cssText = "position:fixed;left:-10000px;top:0;width:720px;height:1200px;border:0;visibility:hidden";
+  document.body.appendChild(fr);
+  try{
+    fr.contentDocument.open(); fr.contentDocument.write(montarRelatorioHTML()); fr.contentDocument.close();
+    await new Promise(r => setTimeout(r, 150));
+    const alvo = fr.contentDocument.querySelector(".rel");
+    return await html2pdf().set({
+      margin:[14,12,14,12], filename:nomeArquivoRelatorio(),
+      image:{type:"jpeg", quality:0.9},
+      html2canvas:{scale:1.8, useCORS:true, backgroundColor:"#ffffff", width:720, windowWidth:720, x:0, scrollX:0, scrollY:0},
+      jsPDF:{unit:"mm", format:"a4", orientation:"portrait"},
+      pagebreak:{mode:["css","legacy"]}
+    }).from(alvo).outputPdf("blob");
+  }finally{
+    fr.remove();
+  }
+}
+
+/* Botão "Relatório (PDF)": baixa o PDF; se o gerador falhar, abre a versão
+   para impressão (Ctrl+P → Salvar como PDF dá o mesmo resultado). */
+async function baixarRelatorio(){
+  const bt = document.getElementById("btRelatorio");
+  if(bt){ bt.disabled = true; bt.textContent = "Gerando…"; }
+  try{
+    const blob = await gerarRelatorioPDF();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = nomeArquivoRelatorio(); a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }catch(e){
+    const w = window.open("", "_blank");
+    if(w){
+      w.document.open(); w.document.write(montarRelatorioHTML()); w.document.close();
+      setTimeout(() => { try{ w.focus(); w.print(); }catch(_){} }, 400);
+    }else{
+      informar("Não foi possível gerar o PDF: " + e.message);
+    }
+  }finally{
+    if(bt){ bt.disabled = false; bt.textContent = "Relatório (PDF)"; }
+  }
+}
+
+/* =========================================================================
+   9. PARTIDA
+   ========================================================================= */
+iniciar();
+</script>
+</body>
+</html>
