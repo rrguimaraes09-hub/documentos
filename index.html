@@ -300,9 +300,10 @@ const SUPABASE_ANON_KEY = "sb_publishable_MTMJaYe0e2kplnrR_TZfpA_Hq8JXXGK";
 <!-- ============ APLICAÇÃO ============ -->
 <div id="app" class="oculto">
   <div class="topo">
-    <div class="marca"><div class="fa">F|A</div><span class="txt">Portal de Documentos</span></div>
+    <div class="marca" id="marcaInicio" title="Voltar à página inicial" style="cursor:pointer"><div class="fa">F|A</div><span class="txt">Portal de Documentos</span></div>
     <div class="sep"></div>
     <div class="quem"><b id="quemNome">—</b><span class="selo" id="quemSelo">—</span></div>
+    <button class="bt-topo" id="btInicio" title="Voltar à página inicial">⌂ Início</button>
     <button class="bt-topo bt-ouro" id="btNova">+ Nova pasta</button>
     <button class="bt-topo" id="btSair">Sair</button>
   </div>
@@ -708,6 +709,8 @@ const esc = s => String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">
 const ehEscritorio = () => eu && eu.papel === "escritorio";
 const nomeCliente = id => (clientes.find(c=>c.id===id)||{}).nome || id;
 const brl = d => d ? String(d).slice(0,10).split("-").reverse().join("/") : "—";
+const brlHora = d => { if(!d) return "—"; const x = new Date(d); const p = n => String(n).padStart(2,"0");
+  return `${p(x.getDate())}/${p(x.getMonth()+1)}/${x.getFullYear()} às ${p(x.getHours())}:${p(x.getMinutes())}`; };
 const kb = n => !n ? "" : n < 1048576 ? Math.round(n/1024)+" KB" : (n/1048576).toFixed(1)+" MB";
 const ext = nome => { const p = String(nome).split("."); return p.length>1 ? "."+p.pop().toLowerCase() : ""; };
 const aviso = (txt,tipo="inf") => document.getElementById("avisoBox").innerHTML =
@@ -809,6 +812,14 @@ async function entrar(){
 let enviando = false;   // trava o repinte enquanto um upload está em curso
 function aoMudar(){ if(enviando) return; pasta ? recarregarPasta() : carregarLista(); }
 document.getElementById("btSair").onclick = async () => { await sb.auth.signOut(); };
+/* "Início" (botão e logotipo): volta à página inicial de qualquer lugar. Se
+   houver upload em andamento, espera terminar em vez de abandonar no meio. */
+const irParaInicio = () => {
+  if(enviando){ informar("Aguarde terminar o envio do arquivo antes de sair da pasta."); return; }
+  pasta = null; carregarLista(); window.scrollTo({top:0});
+};
+document.getElementById("btInicio").onclick = irParaInicio;
+document.getElementById("marcaInicio").onclick = irParaInicio;
 
 /* =========================================================================
    6. LISTA DE PASTAS
@@ -976,7 +987,7 @@ function pintarPasta(){
       ${pasta.tipo ? `<button class="bt" id="btRelatorio" title="Gera o relatório do checklist em PDF, com a situação de cada documento">Relatório (PDF)</button>` : ""}
     </div>
     <p class="sub-pg">${esc(nomeCliente(pasta.cliente_id))}${pasta.processo?" · processo "+esc(pasta.processo):""}
-      · aberta em ${brl(pasta.criado_em)}</p>
+      · aberta em ${brl(pasta.criado_em)}${pasta.arquivos_limpos_em ? ` · <b style="color:#8b1e1e">arquivos removidos do portal em ${brl(pasta.arquivos_limpos_em)} (caso já protocolado)</b>` : ""}</p>
 
     <div class="trilha">${ETAPAS.map((e,i)=>{
       const at = etapaIdx(pasta.etapa);
@@ -1144,7 +1155,13 @@ function pintarPasta(){
       <div class="acoes-item" style="margin-top:14px">
         <button class="bt forte" id="btSalvarEsc">Salvar</button>
         <button class="bt ouro" id="btPacote">Baixar pacote (.zip)</button>
+        ${pasta.etapa === "protocolado" && arquivos.length ? `<button class="bt perigo" id="btLimpar" title="Remove os PDFs do portal; a pasta, o checklist e o histórico ficam">Limpar arquivos</button>` : ""}
         <button class="bt perigo" id="btApagar">Excluir pasta</button>
+      </div>
+      <div style="margin-top:8px;font-size:12.5px;color:var(--muted)">
+        ${pasta.pacote_baixado_em ? `Pacote baixado por aqui pela última vez em ${brlHora(pasta.pacote_baixado_em)}.` : `Pacote ainda não baixado por aqui.`}
+        ${pasta.arquivos_limpos_em ? ` · <b style="color:#8b1e1e">Arquivos removidos do portal em ${brlHora(pasta.arquivos_limpos_em)}.</b>` : ""}
+        ${pasta.etapa !== "protocolado" && arquivos.length ? ` · A limpeza dos arquivos fica disponível quando a etapa for <i>Protocolado</i>.` : ""}
       </div>
       <div class="campo" style="margin-top:18px"><label>Anotações internas — o cliente não vê</label>
         <textarea id="fNota" placeholder="Anotação interna..."></textarea>
@@ -1234,6 +1251,8 @@ function ligarEventosPasta(){
   if(btPacote) btPacote.onclick = baixarPacote;
   const btApagar = el.querySelector("#btApagar");
   if(btApagar) btApagar.onclick = excluirPasta;
+  const btLimpar = el.querySelector("#btLimpar");
+  if(btLimpar) btLimpar.onclick = limparArquivos;
   const btRelatorio = el.querySelector("#btRelatorio");
   if(btRelatorio) btRelatorio.onclick = baixarRelatorio;
   const btVoltarLista = el.querySelector("#btVoltarLista");
@@ -1478,6 +1497,43 @@ function enviarAoEscritorio(){
   });
 }
 
+/* ---- limpar arquivos após o protocolo ----
+   Remove os PDFs do portal (bucket + registros em "arquivos"); a pasta, o
+   checklist, o número do processo e as anotações ficam. Se o pacote nunca foi
+   baixado por aqui, avisa e pergunta antes de prosseguir. */
+function limparArquivos(){
+  if(!arquivos.length){ informar("Esta pasta não tem arquivos para limpar."); return; }
+  const n = arquivos.length;
+  const mb = (arquivos.reduce((s,a) => s + (a.tamanho||0), 0) / 1048576).toFixed(1);
+  const executar = async () => {
+    const nomes = arquivos.slice().sort((a,b) => (a.ordem||999) - (b.ordem||999))
+      .map(a => a.nome_protocolo || a.nome_original);
+    const caminhos = arquivos.map(a => a.caminho);
+    const r1 = await sb.storage.from("documentos").remove(caminhos);
+    if(r1.error){ aviso("Não foi possível remover os arquivos do armazenamento: "+esc(r1.error.message),"err"); return; }
+    const r2 = await sb.from("arquivos").delete().eq("pasta_id", pasta.id);
+    if(r2.error){ aviso("Arquivos removidos do armazenamento, mas o registro não pôde ser apagado: "+esc(r2.error.message),"err"); return; }
+    const agora = new Date().toISOString();
+    await sb.from("pastas").update({arquivos_limpos_em: agora}).eq("id", pasta.id);
+    await sb.from("pastas_notas").insert({
+      pasta_id: pasta.id, autor: eu.user_id,
+      texto: `Arquivos removidos do portal (${n} arquivo(s), ${mb} MB)` +
+             (pasta.pacote_baixado_em ? ` — pacote baixado em ${brlHora(pasta.pacote_baixado_em)}.` : ` — SEM registro de pacote baixado por aqui.`) +
+             `\nRelação: ` + nomes.join("; ")
+    });
+    await recarregarPasta();
+    aviso(`Arquivos removidos. A pasta continua no quadro com o histórico do checklist e a relação do que foi enviado (na anotação interna).`,"ok");
+  };
+  const detalhe = `${n} arquivo(s), ${mb} MB. A pasta, o checklist, o número do processo e as anotações continuam. Não há como recuperar os arquivos depois.`;
+  if(!pasta.pacote_baixado_em){
+    confirmar(`ATENÇÃO: o pacote (.zip) desta pasta NUNCA foi baixado por aqui. Se limpar agora, os documentos deixam de existir no portal e só restarão nos autos ou no que você tiver salvo por outro caminho. ${detalhe} Prosseguir mesmo assim?`,
+      "Limpar mesmo assim", executar);
+  }else{
+    confirmar(`Remover do portal os arquivos desta pasta? Pacote baixado em ${brlHora(pasta.pacote_baixado_em)}. ${detalhe}`,
+      "Limpar arquivos", executar);
+  }
+}
+
 function excluirPasta(){
   confirmar("Excluir esta pasta e todos os arquivos enviados nela? Não há como desfazer.","Excluir", async () => {
     const caminhos = arquivos.map(a => a.caminho);
@@ -1581,6 +1637,17 @@ async function baixarPacote(){
     a.download = (pasta.referencia || "pasta").replace(/[\\/:*?"<>|]/g,"").slice(0,60) + ".zip";
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
+
+    // Registra que o pacote foi baixado — só se saiu íntegro (nenhum FALHOU).
+    // É esse carimbo que libera o "Limpar arquivos" sem aviso.
+    const integro = !relacao.some(n => n.startsWith("[FALHOU]"));
+    if(integro){
+      const { error } = await sb.from("pastas").update({pacote_baixado_em: new Date().toISOString()}).eq("id", pasta.id);
+      if(!error) pasta.pacote_baixado_em = new Date().toISOString();
+      pintarPasta();
+    }else{
+      aviso("O pacote saiu com falha em algum arquivo (veja o RELACAO.txt). Por isso não foi registrado como baixado.","err");
+    }
   }catch(e){
     informar("Não foi possível montar o pacote: " + e.message);
   }finally{
