@@ -582,6 +582,73 @@ const DATA = {
           LEGIT("divida") ]
       }
     ]
+  },
+
+  /* ---- fora da recuperação de crédito ---- */
+  noticiacrime:{
+    label:"Notícia-crime", ico:"🚨", semCredor:true,
+    when:"Você quer levar ao Ministério Público / Polícia um caso de duplicata simulada, estelionato ou apropriação indébita.",
+    sections:[
+      { id:"nc_vinculo", num:1, title:"Operação e vínculo com o investigado", tip:"Mostram a relação negocial e o que foi pago.",
+        items:[
+          {id:"contrato", n:"Contrato de cessão / fomento com o cedente", lvl:"obrig",
+           d:"Contrato que formalizou a relação com quem originou os títulos suspeitos."},
+          {id:"bordero", n:"Borderôs / termos de cessão dos títulos suspeitos", lvl:"obrig",
+           d:"Documentos que listam exatamente quais títulos foram negociados, com valores, datas e sacados."},
+          {id:"pgto", n:"Comprovante de pagamento ao cedente", lvl:"obrig",
+           d:"TED, boleto ou extrato mostrando o dinheiro que efetivamente saiu para o cedente por esses títulos."}
+        ]
+      },
+      { id:"nc_lastro", num:2, title:"Os títulos e a falta de lastro", tip:"O núcleo da notícia-crime: o título existe, a operação não.",
+        items:[
+          {id:"titulos", n:"Duplicatas / cheques / notas fiscais objeto da suspeita", lvl:"obrig",
+           d:"Cópia dos títulos e das notas fiscais vinculadas."},
+          {id:"sefaz", n:"Consulta da NF-e na SEFAZ (cancelada, inidônea ou inexistente)", lvl:"recom",
+           d:"Tela ou certidão da consulta pública da chave de acesso mostrando a situação da nota."},
+          {id:"sacado", n:"Declaração / resposta do sacado negando a compra ou a entrega", lvl:"obrig",
+           d:"E-mail, carta, notificação respondida ou registro de contato em que o sacado nega a operação."},
+          {id:"naoentrega", n:"Prova de que não houve entrega da mercadoria ou prestação do serviço", lvl:"aplic",
+           d:"Ausência de canhoto, resposta da transportadora, declaração do sacado, etc."}
+        ]
+      },
+      { id:"nc_tentativas", num:3, title:"Tentativas de solução", tip:"Mostram que houve chance de esclarecer e não houve resposta.",
+        items:[
+          {id:"notif", n:"Notificação ao cedente e resposta (se houve)", lvl:"recom",
+           d:"Comunicação formal cobrando explicação ou substituição dos títulos, e o que ele respondeu."},
+          {id:"msgs", n:"E-mails / mensagens / prints com o cedente e o sacado", lvl:"recom",
+           d:"Conversas que mostrem a negociação, as cobranças e as justificativas dadas."},
+          {id:"protestos", n:"Protestos e certidões dos títulos", lvl:"aplic",
+           d:"Instrumentos de protesto e certidões de cartório, se os títulos foram protestados."}
+        ]
+      },
+      { id:"nc_autoria", num:4, title:"Autoria e prejuízo", tip:"Quem assinou, quem se beneficiou e quanto foi o dano.",
+        items:[
+          {id:"societario", n:"Contrato social / QSA do cedente e documentos de quem assinou", lvl:"obrig",
+           d:"Última alteração contratual, cartão CNPJ e identificação dos sócios/representantes que assinaram os contratos e títulos."},
+          {id:"prejuizo", n:"Posição do débito / valor do prejuízo", lvl:"obrig",
+           d:"Planilha com os títulos, valores pagos e o prejuízo total, com a memória de cálculo."},
+          {id:"indicios", n:"Outros indícios: outras vítimas, notícias, B.O. anterior", lvl:"aplic",
+           d:"Tudo o que reforce o padrão de conduta — outras securitizadoras lesadas, matérias, ocorrências registradas."}
+        ]
+      }
+    ]
+  },
+
+  avulso:{
+    label:"Outro caso (avulso)", ico:"📂", semCredor:true, livre:true,
+    when:"Qualquer outro caso que não seja cobrança nem notícia-crime. Descreva o que é e envie o que tiver.",
+    sections:[
+      { id:"av_docs", num:1, title:"Documentos do caso", tip:"Não há lista fixa: envie o que existir e explique na descrição acima o que é cada coisa.",
+        items:[
+          {id:"parte", n:"Documentos da parte (contrato social, RG/CPF, procuração se já houver)", lvl:"obrig",
+           d:"Quem é o cliente neste caso: documentos societários ou pessoais e a procuração assinada, se já existir."},
+          {id:"caso", n:"Documentos do caso (contratos, títulos, provas, decisões)", lvl:"obrig",
+           d:"O material principal: contratos, títulos, notas, comprovantes, prints, decisões judiciais, o que houver."},
+          {id:"comunic", n:"Comunicações e tentativas de solução", lvl:"recom",
+           d:"E-mails, mensagens, notificações e respostas entre as partes."}
+        ]
+      }
+    ]
   }
 };
 
@@ -673,7 +740,25 @@ const PROTO = {
   "compl:demo":"Demonstrativo do Débito",
   "compl:cobranca":"Comunicações de Cobrança Extrajudicial",
   "compl:legit":"Documentos da Relação Comercial",
-  "compl:emails":"Comunicações entre as Partes"
+  "compl:emails":"Comunicações entre as Partes",
+
+  "nc_vinculo:contrato":"Contrato de Cessão com o Cedente",
+  "nc_vinculo:bordero":"Borderô dos Títulos Suspeitos",
+  "nc_vinculo:pgto":"Comprovante de Pagamento ao Cedente",
+  "nc_lastro:titulos":"Títulos e Notas Fiscais Objeto da Suspeita",
+  "nc_lastro:sefaz":"Consulta da NF-e na SEFAZ",
+  "nc_lastro:sacado":"Declaração do Sacado",
+  "nc_lastro:naoentrega":"Prova da Não Entrega",
+  "nc_tentativas:notif":"Notificação ao Cedente",
+  "nc_tentativas:msgs":"Comunicações com Cedente e Sacado",
+  "nc_tentativas:protestos":"Protestos e Certidões",
+  "nc_autoria:societario":"Documentos Societários do Cedente",
+  "nc_autoria:prejuizo":"Demonstrativo do Prejuízo",
+  "nc_autoria:indicios":"Outros Indícios",
+
+  "av_docs:parte":"Documentos da Parte",
+  "av_docs:caso":"Documentos do Caso",
+  "av_docs:comunic":"Comunicações entre as Partes"
 };
 function nomeProtocolo(secId, itId, fallback){
   return PROTO[secId+":"+itId] || String(fallback||"Documento").replace(/[\\/:*?"<>|]/g,"").slice(0,70);
@@ -1022,8 +1107,8 @@ function pintarPasta(){
     </div>
   </div>`;
 
-  /* ---- natureza do credor ---- */
-  html += `<div class="card">
+  /* ---- natureza do credor (só nos tipos de cobrança) ---- */
+  if(!(d && d.semCredor)) html += `<div class="card">
     <h2 class="block">Natureza do credor</h2>
     <div class="pick-grid">${CREDORES.map(c => `
       <button class="pick ${pasta.credor===c.id?"active":""}" data-credor="${c.id}" ${edit?"":"disabled"}>
@@ -1033,7 +1118,7 @@ function pintarPasta(){
 
   /* ---- tipo de cobrança ---- */
   html += `<div class="card">
-    <h2 class="block">Qual é o tipo de cobrança?</h2>
+    <h2 class="block">Qual é o tipo de caso?</h2>
     <div class="pick-grid">${Object.entries(DATA).map(([k,v]) => `
       <button class="pick ${pasta.tipo===k?"active":""}" data-tipo="${k}" ${edit?"":"disabled"}>
         <span class="ico">${v.ico}</span><span><span class="t">${esc(T(v.label))}</span><span class="d">${esc(T(v.when))}</span></span>
@@ -1053,8 +1138,17 @@ function pintarPasta(){
     </div>`;
   }
 
+  /* ---- observações / descrição do caso (no avulso, vem antes da lista) ---- */
+  const cardObs = (titulo, placeholder) => `<div class="card">
+    <h2 class="block">${titulo}</h2>
+    <textarea id="fObs" ${edit?"":"disabled"} style="${d && d.livre ? "min-height:130px" : ""}" placeholder="${esc(placeholder)}">${esc(pasta.obs||"")}</textarea>
+  </div>`;
+  const obsNoTopo = !!(d && d.livre);
+  if(obsNoTopo) html += cardObs("Descreva o caso e o que está sendo enviado",
+    "Ex.: cobrança de aluguel comercial; o inquilino saiu em março sem pagar; envio contrato, e-mails e comprovantes. Diga também o que você espera do escritório.");
+
   if(!d){
-    html += `<div class="vazio">Escolha o tipo de cobrança acima para ver a lista de documentos.</div>`;
+    html += `<div class="vazio">Escolha o tipo de caso acima para ver a lista de documentos.</div>`;
     el.innerHTML = html + rodapeDoc();
     ligarEventosPasta();
     return;
@@ -1089,7 +1183,7 @@ function pintarPasta(){
 
   html += `<div class="progress">
     <div class="row1">
-      <div class="lead">Documentos — ${esc(T(d.label))} · ${esc((CREDORES.find(c=>c.id===pasta.credor)||CREDORES[0]).label)}</div>
+      <div class="lead">Documentos — ${esc(T(d.label))}${d.semCredor ? "" : " · " + esc((CREDORES.find(c=>c.id===pasta.credor)||CREDORES[0]).label)}</div>
       <span class="chip obrig">Obrigatórios: <b>${obProntos}/${obTot}</b></span>
       <span class="chip done">Enviados: <b>${prontos}/${total}</b></span>
     </div>
@@ -1152,11 +1246,9 @@ function pintarPasta(){
     html += `</div>`;
   });
 
-  /* ---- observações do cliente ---- */
-  html += `<div class="card">
-    <h2 class="block">Observações para o escritório</h2>
-    <textarea id="fObs" ${edit?"":"disabled"} placeholder="${esc(T("Ex.: o cheque original está com o cedente; a nota fiscal será enviada até sexta; há garantidor além do devedor principal..."))}">${esc(pasta.obs||"")}</textarea>
-  </div>`;
+  /* ---- observações do cliente (quando não foram para o topo) ---- */
+  if(!obsNoTopo) html += cardObs("Observações para o escritório",
+    T("Ex.: o cheque original está com o cedente; a nota fiscal será enviada até sexta; há garantidor além do devedor principal..."));
 
   /* ---- área do escritório ---- */
   if(ehEscritorio()){
@@ -1239,7 +1331,7 @@ function ligarEventosPasta(){
     const trocando = pasta.tipo && (itens.length || arquivos.length);
     const aplicar = () => { pasta.tipo = b.dataset.tipo; gravarPreenchimento(true); };
     trocando
-      ? confirmar("Trocar o tipo de cobrança muda a lista de documentos. Os arquivos já enviados continuam na pasta, mas podem deixar de ter um item correspondente. Continuar?","Trocar", aplicar)
+      ? confirmar("Trocar o tipo de caso muda a lista de documentos. Os arquivos já enviados continuam na pasta, mas podem deixar de ter um item correspondente. Continuar?","Trocar", aplicar)
       : aplicar();
   });
   el.querySelectorAll("[data-motivo]").forEach(b => b.onclick = () => {
@@ -1495,7 +1587,7 @@ async function apagarArquivo(id){
 /* ---- envio ---- */
 function enviarAoEscritorio(){
   const d = DATA[pasta.tipo];
-  if(!d){ informar("Escolha o tipo de cobrança antes de enviar."); return; }
+  if(!d){ informar("Escolha o tipo de caso antes de enviar."); return; }
   let obTot=0, obProntos=0;
   secoesVisiveis().forEach(sec => sec.items.forEach(it => {
     if(it.lvl !== "obrig") return;
@@ -1742,8 +1834,8 @@ function montarRelatorioHTML(){
     ${linha("Caso / quem cobrar", esc(pasta.referencia || "sem identificação"))}
     ${linha("Cliente", esc(nomeCliente(pasta.cliente_id)))}
     ${linha("Responsável pelo envio", esc(pasta.contato || "—"))}
-    ${linha("Natureza do credor", esc(credor.label))}
-    ${linha("Tipo de cobrança", esc(d ? T(d.label) : "não informado"))}
+    ${d && d.semCredor ? "" : linha("Natureza do credor", esc(credor.label))}
+    ${linha("Tipo de caso", esc(d ? T(d.label) : "não informado"))}
     ${motivos.length ? linha("Motivo do regresso", esc(motivos.join(" · "))) : ""}
     ${linha("Etapa atual", `<span class="etq" style="background:${et.cor}">${esc(et.nome)}</span>`)}
     ${pasta.processo ? linha("Processo", esc(pasta.processo)) : ""}
@@ -1786,7 +1878,7 @@ function montarRelatorioHTML(){
     corpo += `</tbody></table></div>`;
   });
 
-  corpo += `<div class="secao"><h2><span>✎</span>Observações gerais do cliente</h2>
+  corpo += `<div class="secao"><h2><span>✎</span>${d && d.livre ? "Descrição do caso pelo cliente" : "Observações gerais do cliente"}</h2>
     <p class="obsger">${pasta.obs ? esc(pasta.obs).replace(/\n/g,"<br>") : "<i>Nenhuma.</i>"}</p></div>
   <div class="rod">Felipe Albuquerque Advocacia — OAB/SC 33.415 · Fone/WhatsApp: (48) 3056-0800 · felipe@felipeadv.com.br<br>
     Este relatório reflete a situação da pasta no momento em que foi gerado.</div>`;
