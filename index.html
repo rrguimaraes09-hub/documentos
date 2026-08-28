@@ -120,6 +120,9 @@
   .progress .row1{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   .progress .lead{font-weight:700;font-size:14px;flex:1;min-width:200px}
   .chip{font-size:12px;font-weight:600;padding:4px 11px;border-radius:20px;border:1px solid var(--line);white-space:nowrap}
+  .chip-f{cursor:pointer;background:#fff;font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px;border:1px solid var(--line);white-space:nowrap;transition:.15s}
+  .chip-f:hover{border-color:var(--navy)}
+  .chip-f.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   .chip.obrig{background:var(--obrig-bg);color:var(--obrig);border-color:transparent}
   .chip.done{background:var(--ok-bg);color:var(--ok);border-color:transparent}
   .bar{height:8px;background:var(--line-2);border-radius:20px;overflow:hidden;margin-top:12px}
@@ -305,7 +308,6 @@ const SUPABASE_ANON_KEY = "sb_publishable_MTMJaYe0e2kplnrR_TZfpA_Hq8JXXGK";
     <div class="sep"></div>
     <div class="quem"><b id="quemNome">—</b><span class="selo" id="quemSelo">—</span></div>
     <a class="bt-topo" href="https://rrguimaraes09-hub.github.io/" style="text-decoration:none" title="Voltar ao Espaço do Cliente">⌂ Espaço do Cliente</a>
-    <button class="bt-topo" id="btInicio" title="Voltar à página inicial">⌂ Início</button>
     <button class="bt-topo bt-ouro" id="btNova">+ Nova pasta</button>
     <button class="bt-topo" id="btSair">Sair</button>
   </div>
@@ -326,6 +328,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_MTMJaYe0e2kplnrR_TZfpA_Hq8JXXGK";
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
           <input type="text" id="busca" placeholder="Buscar por referência, cliente ou processo...">
         </div>
+        <span id="filtroCli" style="display:flex;gap:7px;flex-wrap:wrap"></span>
       </div>
       <div class="board" id="board"></div>
     </div>
@@ -790,6 +793,7 @@ let itens = [];             // itens da pasta aberta
 let arquivos = [];          // arquivos da pasta aberta
 let notas = [];             // anotações internas da pasta aberta
 let busca = "";
+let filtrosCli = new Set();   // filtro por cliente (chips na barra do escritório)
 let salvandoTimer = null;
 
 const esc = s => String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
@@ -905,7 +909,6 @@ const irParaInicio = () => {
   if(enviando){ informar("Aguarde terminar o envio do arquivo antes de sair da pasta."); return; }
   pasta = null; carregarLista(); window.scrollTo({top:0});
 };
-document.getElementById("btInicio").onclick = irParaInicio;
 document.getElementById("marcaInicio").onclick = irParaInicio;
 
 /* =========================================================================
@@ -962,9 +965,12 @@ function pintarCliente(){
 }
 
 function pintarBoard(){
+  document.getElementById("filtroCli").innerHTML = clientes.map(c =>
+    `<button class="chip-f ${filtrosCli.has(c.id)?"on":""}" data-cli="${esc(c.id)}">${esc(c.nome)}</button>`).join("");
   const t = busca.trim().toLowerCase();
-  const filtradas = !t ? pastas : pastas.filter(p =>
+  let filtradas = !t ? pastas : pastas.filter(p =>
     [p.referencia, nomeCliente(p.cliente_id), p.processo].join(" ").toLowerCase().includes(t));
+  if(filtrosCli.size) filtradas = filtradas.filter(p => filtrosCli.has(p.cliente_id));
 
   document.getElementById("board").innerHTML = ETAPAS.map(e => {
     const doGrupo = filtradas.filter(p => p.etapa === e.id);
@@ -982,6 +988,12 @@ function pintarBoard(){
 }
 
 document.getElementById("busca").oninput = e => { busca = e.target.value; pintarBoard(); };
+document.getElementById("filtroCli").addEventListener("click", e => {
+  const b = e.target.closest(".chip-f"); if(!b) return;
+  const id = b.dataset.cli;
+  filtrosCli.has(id) ? filtrosCli.delete(id) : filtrosCli.add(id);
+  pintarBoard();
+});
 
 /* ---- nova pasta ---- */
 document.getElementById("btNova").onclick = () => {
