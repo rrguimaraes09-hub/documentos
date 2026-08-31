@@ -1116,7 +1116,7 @@ function pintarPasta(){
       return `<div class="tpasso ${i===at?"on":i<at?"feito":""} ${clicavel?"clicavel":""}"
         ${clicavel ? `data-etapa="${e.id}" title="Mover esta pasta para “${e.nome}”"` : ""}>${e.nome}</div>`;
     }).join("")}</div>
-    ${ehEscritorio() ? `<div style="font-size:12px;color:var(--muted);margin:-6px 0 14px">Clique numa etapa da trilha para mover a pasta.</div>` : ""}`;
+    ${ehEscritorio() ? `<div style="font-size:12px;color:var(--muted);margin:8px 0 14px">Clique numa etapa da trilha para mover a pasta.</div>` : ""}`;
 
   /* ---- identificação ---- */
   html += `<div class="card">
