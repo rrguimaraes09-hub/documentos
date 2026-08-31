@@ -799,6 +799,13 @@ let salvandoTimer = null;
 const esc = s => String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 const ehEscritorio = () => eu && eu.papel === "escritorio";
 const nomeCliente = id => (clientes.find(c=>c.id===id)||{}).nome || id;
+// Só gera procuração para cliente cujo bloco de qualificação o escritório já
+// conferiu e liberou (clientes.procuracao_liberada) — o texto é outorga de
+// poderes e não pode sair de dado não validado.
+const clienteProcuracao = id => {
+  const c = clientes.find(x=>x.id===id);
+  return (c && c.procuracao_liberada && c.procuracao_qualificacao) ? c : null;
+};
 const brl = d => d ? String(d).slice(0,10).split("-").reverse().join("/") : "—";
 const brlHora = d => { if(!d) return "—"; const x = new Date(d); const p = n => String(n).padStart(2,"0");
   return `${p(x.getDate())}/${p(x.getMonth()+1)}/${x.getFullYear()} às ${p(x.getHours())}:${p(x.getMinutes())}`; };
@@ -882,7 +889,9 @@ async function entrar(){
   }
   eu = perfil;
 
-  const { data:cls } = await sb.from("clientes").select("id,nome").eq("ativo",true).order("nome");
+  const { data:cls } = await sb.from("clientes")
+    .select("id,nome,procuracao_qualificacao,procuracao_assinatura,procuracao_liberada")
+    .eq("ativo",true).order("nome");
   clientes = cls || [];
 
   document.getElementById("telaLogin").classList.add("oculto");
@@ -1096,6 +1105,7 @@ function pintarPasta(){
       <h1 class="titulo-pg" style="flex:1;min-width:220px">${esc(pasta.referencia || "Pasta sem identificação")}</h1>
       <span class="etq" style="background:${et.cor}">${et.nome}</span>
       ${pasta.tipo ? `<button class="bt" id="btRelatorio" title="Gera o relatório do checklist em PDF, com a situação de cada documento">Relatório (PDF)</button>` : ""}
+      ${clienteProcuracao(pasta.cliente_id) ? `<button class="bt" id="btProcuracao" title="Gera a procuração deste caso em papel timbrado, para imprimir e assinar">Procuração</button>` : ""}
     </div>
     <p class="sub-pg">${esc(nomeCliente(pasta.cliente_id))}${pasta.processo?" · processo "+esc(pasta.processo):""}
       · aberta em ${brl(pasta.criado_em)}${pasta.arquivos_limpos_em ? ` · <b style="color:#8b1e1e">arquivos removidos do portal em ${brl(pasta.arquivos_limpos_em)} (caso já protocolado)</b>` : ""}</p>
@@ -1378,6 +1388,8 @@ function ligarEventosPasta(){
   if(btLimpar) btLimpar.onclick = limparArquivos;
   const btRelatorio = el.querySelector("#btRelatorio");
   if(btRelatorio) btRelatorio.onclick = baixarRelatorio;
+  const btProcuracao = el.querySelector("#btProcuracao");
+  if(btProcuracao) btProcuracao.onclick = gerarProcuracao;
   const btVoltarLista = el.querySelector("#btVoltarLista");
   if(btVoltarLista) btVoltarLista.onclick = fecharPasta;
 }
@@ -1969,6 +1981,78 @@ async function gerarRelatorioPDF(){
   }finally{
     fr.remove();
   }
+}
+
+/* =========================================================================
+   PROCURAÇÃO (pedido do Rafael, 28/08/2026)
+   Monta a procuração do caso no padrão da skill `procuracao` e abre a janela
+   de impressão, para o cliente salvar em PDF, imprimir e assinar.
+   O texto dos poderes é FIXO e a qualificação vem do cadastro conferido pelo
+   escritório: o cliente só informa contra quem é a cobrança (finalidade ampla,
+   porque a ação em si é definida pelo escritório no enquadramento).
+   ========================================================================= */
+const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho",
+               "agosto","setembro","outubro","novembro","dezembro"];
+
+function gerarProcuracao(){
+  const cli = clienteProcuracao(pasta.cliente_id);
+  if(!cli){ informar("Este cliente ainda não tem a qualificação liberada para gerar procuração. Fale com o escritório."); return; }
+  const sugestao = (pasta.referencia || "").trim();
+  confirmar(
+    "Contra quem será a cobrança? O nome entra na finalidade da procuração.",
+    "Gerar procuração",
+    (devedor) => {
+      const alvo = (devedor || "").trim();
+      if(!alvo){ informar("Informe contra quem será a cobrança para gerar a procuração."); return; }
+      imprimirProcuracao(cli, alvo);
+    },
+    `<input type="text" id="procDevedor" value="${esc(sugestao)}" placeholder="Ex.: Indústria de Embalagens Modelo Ltda"
+       style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit">
+     <div style="font-size:11.5px;color:var(--muted);margin-top:6px">
+       A procuração sai com poderes gerais para o foro e a finalidade de ingressar com a ação de cobrança cabível
+       em face de quem você indicar. A definição da ação (execução, monitória) é do escritório.
+     </div>`
+  );
+}
+
+function imprimirProcuracao(cli, devedor){
+  const hoje = new Date();
+  const dataExt = `${hoje.getDate()} de ${MESES[hoje.getMonth()]} de ${hoje.getFullYear()}`;
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Procuração — ${esc(cli.nome)}</title>
+<style>
+  @page{size:A4;margin:12mm 20mm 18mm 25mm}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,Helvetica,sans-serif;font-size:12pt;line-height:1.15;color:#000}
+  .timbrado{width:100%;margin-bottom:18px}
+  h1{font-size:12pt;font-weight:bold;text-align:center;margin-bottom:14px}
+  p.corpo{text-align:justify;text-indent:2cm}
+  /* O fecho anda junto: data, linha e nome nunca sobram sozinhos na 2ª página
+     (armadilha do lote de 26/08/2026, que obrigou a refazer 28 procurações). */
+  .fecho{page-break-inside:avoid;break-inside:avoid;text-align:center;margin-top:26px}
+  .fecho .linha{margin-top:34px}
+  .fecho .nome{font-weight:bold}
+  .pe{position:fixed;bottom:6mm;left:0;right:0;text-align:center;font-size:8pt;color:#444}
+  @media print{ body{-webkit-print-color-adjust:exact;print-color-adjust:exact} }
+</style></head><body>
+<img class="timbrado" src="https://rrguimaraes09-hub.github.io/timbrado.jpg" alt="Felipe Albuquerque Advocacia">
+<h1>PROCURAÇÃO</h1>
+<p class="corpo">Por este instrumento particular de procuração, a infra firmada <b>${esc(cli.procuracao_qualificacao)}</b>, nomeia e constitui como seus procuradores, <b>FELIPE MARCELINO DE ALBUQUERQUE SOCIEDADE INDIVIDUAL DE ADVOCACIA</b>, regularmente inscrita sob o CNPJ 42.478.147/0001-31, <b>Dr. FELIPE MARCELINO DE ALBUQUERQUE</b>, brasileiro, profissional regularmente inscrito na Ordem dos Advogados do Brasil, Seção de Santa Catarina sob o nº 33.415 e <b>Dr. RAFAEL ROCHA GUIMARÃES</b>, brasileiro, profissional regularmente inscrito na Ordem dos Advogados do Brasil, Seção de Santa Catarina sob o nº 61.237, todos com escritório, na Rua Desembargador Pedro Silva, nº 350, Ed. Henery, 1º Andar, bairro Comerciário, Criciúma/SC, CEP 88.802-300, com amplos e ilimitados poderes no Foro em geral, perante qualquer Juízo, Junta de Conciliação e Julgamento, Instância ou Tribunal, defender seus interesses em todas e quaisquer ações em que o outorgante seja autor, réu, assistente ou oponente podendo para tal fim mencionado procurador, usar dos poderes "ad et extra judicia", podendo transigir, receber e dar quitação, bem como praticar todos os demais atos que se fizerem necessários ao bom e fiel e desempenho do presente mandato, o que tudo dará por bom, firme e valioso, especialmente para ingressar com a ação de cobrança cabível em face de ${esc(devedor)}.</p>
+<div class="fecho">
+  <div>Criciúma/SC, ${dataExt}.</div>
+  <div class="linha">____________________________________</div>
+  <div class="nome">${esc(cli.procuracao_assinatura || cli.nome)}</div>
+</div>
+<div class="pe">Rua Desembargador Pedro Silva, nº 350, Ed. Henery, 1º Andar - Comerciário - Criciúma/SC - CEP 88.802-300<br>
+www.felipeadv.com.br • felipe@felipeadv.com.br • Fone/WhatsApp: (48) 3056-0800 / (48) 99103-1391</div>
+</body></html>`;
+  const w = window.open("", "_blank");
+  if(!w){ informar("O navegador bloqueou a janela. Libere os pop-ups para este site e tente de novo."); return; }
+  w.document.write(html);
+  w.document.close();
+  // espera o timbrado carregar antes de chamar a impressão, senão sai sem cabeçalho
+  w.onload = () => { w.focus(); setTimeout(()=>{ try{ w.print(); }catch(e){} }, 300); };
+  setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 1200);
 }
 
 /* Botão "Relatório (PDF)": baixa o PDF; se o gerador falhar, abre a versão
