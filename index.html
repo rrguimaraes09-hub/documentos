@@ -293,8 +293,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_MTMJaYe0e2kplnrR_TZfpA_Hq8JXXGK";
       <h1>Portal de Documentos</h1>
       <p>Felipe Albuquerque Advocacia</p>
     </div>
-    <label for="email">E-mail</label>
-    <input type="email" id="email" name="email" autocomplete="username" required>
+    <label for="email">Usuário ou e-mail</label>
+    <input type="text" id="email" name="email" autocomplete="username" autocapitalize="none" spellcheck="false" required>
     <label for="senha">Senha</label>
     <input type="password" id="senha" name="password" autocomplete="current-password" required>
     <button type="submit" class="entrar" id="btEntrar">Entrar</button>
@@ -866,12 +866,19 @@ document.getElementById("formLogin").addEventListener("submit", async e => {
   e.preventDefault();
   const bt = document.getElementById("btEntrar"), err = document.getElementById("loginErro");
   bt.disabled = true; bt.textContent = "Entrando…"; err.style.display = "none";
-  const { error } = await sb.auth.signInWithPassword({
-    email: document.getElementById("email").value.trim(),
+  // Login por usuário: o Supabase autentica por e-mail, então um login sem "@"
+  // é traduzido pela função email_por_usuario (coluna perfis.usuario) antes de entrar.
+  let login = document.getElementById("email").value.trim();
+  if(login && !login.includes("@")){
+    const { data:em } = await sb.rpc("email_por_usuario", { u: login.toLowerCase() });
+    login = em || "";
+  }
+  const { error } = login ? await sb.auth.signInWithPassword({
+    email: login,
     password: document.getElementById("senha").value
-  });
+  }) : { error: true };
   if(error){
-    err.textContent = "E-mail ou senha inválidos.";
+    err.textContent = "Usuário ou senha inválidos.";
     err.style.display = "block";
     bt.disabled = false; bt.textContent = "Entrar";
     document.getElementById("senha").value = "";
