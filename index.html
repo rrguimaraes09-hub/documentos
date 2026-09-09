@@ -54,6 +54,11 @@
   .topo .marca{display:flex;align-items:center;gap:10px}
   .topo .sep{flex:1}
   .quem{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#cfd6e6}
+  /* seletor de empresa no topo: só aparece para quem tem vínculo com 2+ empresas */
+  .empresa-topo{font-family:inherit;font-size:12.5px;font-weight:600;color:#fff;background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:4px 10px;cursor:pointer;max-width:46vw}
+  .empresa-topo option{color:#1f2733}
+  .empresa-topo:disabled{opacity:.6;cursor:default}
   .selo{font-size:10px;font-weight:700;letter-spacing:.6px;background:rgba(255,255,255,.12);
     border:1px solid rgba(255,255,255,.28);padding:2px 8px;border-radius:20px}
   .bt-topo{font-size:12.5px;font-weight:600;color:#e7ecf6;background:rgba(255,255,255,.08);
@@ -313,6 +318,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_MTMJaYe0e2kplnrR_TZfpA_Hq8JXXGK";
     <div class="marca" id="marcaInicio" title="Voltar à página inicial" style="cursor:pointer"><div class="fa"><img src="https://rrguimaraes09-hub.github.io/logo-fa-branco.png" alt="F|A"></div><span class="txt">Portal de Documentos</span></div>
     <div class="sep"></div>
     <div class="quem"><b id="quemNome">—</b><span class="selo" id="quemSelo">—</span></div>
+    <select id="empresaSel" class="empresa-topo oculto" title="Trocar de empresa"></select>
     <a class="bt-topo" href="https://rrguimaraes09-hub.github.io/" style="text-decoration:none" title="Voltar ao Espaço do Cliente (página inicial)">← Voltar ao início</a>
     <button class="bt-topo bt-ouro" id="btNova">+ Nova pasta</button>
     <button class="bt-topo" id="btSair">Sair</button>
@@ -911,6 +917,7 @@ async function entrar(){
   document.getElementById("app").classList.remove("oculto");
   document.getElementById("quemNome").textContent = eu.nome;
   document.getElementById("quemSelo").textContent = ehEscritorio() ? "ESCRITÓRIO" : "CLIENTE";
+  if(!ehEscritorio()) montarSeletorEmpresa();
 
   // Tempo real: qualquer mudança relevante repinta a tela, dos dois lados.
   sb.channel("portal-vivo")
@@ -924,6 +931,25 @@ async function entrar(){
 
 let enviando = false;   // trava o repinte enquanto um upload está em curso
 function aoMudar(){ if(enviando) return; pasta ? recarregarPasta() : carregarLista(); }
+
+/* Usuário com acesso a mais de uma empresa (vínculos em perfis_clientes): o topo
+   mostra a empresa ativa num seletor. Trocar chama trocar_cliente() no banco, que
+   só aceita empresa vinculada, e recarrega o portal na empresa escolhida.
+   Com uma empresa só, o seletor fica escondido. */
+async function montarSeletorEmpresa(){
+  const sel = document.getElementById("empresaSel");
+  const { data:lista, error } = await sb.rpc("meus_clientes");
+  if(error || !lista || lista.length < 2){ sel.classList.add("oculto"); return; }
+  sel.innerHTML = lista.map(c => `<option value="${esc(c.id)}" ${c.ativo ? "selected" : ""}>${esc(c.nome)}</option>`).join("");
+  sel.onchange = async () => {
+    sel.disabled = true;
+    const { error:e2 } = await sb.rpc("trocar_cliente", { cid: sel.value });
+    if(e2){ alert("Não foi possível trocar de empresa. Tente de novo ou fale com o escritório."); sel.disabled = false; return; }
+    location.reload();
+  };
+  sel.classList.remove("oculto");
+}
+
 document.getElementById("btSair").onclick = async () => { await sb.auth.signOut(); };
 /* "Início" (botão e logotipo): volta à página inicial de qualquer lugar. Se
    houver upload em andamento, espera terminar em vez de abandonar no meio. */
