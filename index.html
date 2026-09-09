@@ -96,9 +96,15 @@
     color:var(--muted);font-size:14px;margin-top:16px}
 
   /* ---------- board do escritório ---------- */
-  .board{display:grid;grid-template-columns:repeat(6,minmax(210px,1fr));gap:12px;margin-top:14px;
-    overflow-x:auto;padding-bottom:8px;align-items:start}
-  .col{background:#eceff4;border-radius:12px;padding:10px;min-height:120px}
+  /* O quadro ocupa exatamente o resto da janela (altura fixada por ajustarBoard) e
+     cada coluna rola por dentro. Assim a barra de rolagem lateral fica sempre
+     visível no pé da tela, em vez de aparecer só depois de rolar a página inteira. */
+  .board{display:grid;grid-template-columns:repeat(6,minmax(210px,1fr));grid-template-rows:minmax(0,1fr);
+    gap:12px;margin-top:14px;overflow:auto;padding-bottom:8px;align-items:stretch}
+  .col{background:#eceff4;border-radius:12px;padding:10px;min-height:120px;min-width:0;
+    display:flex;flex-direction:column}
+  .col-lista{flex:1;min-height:0;overflow-y:auto;padding-right:2px}
+  #visaoEscritorio{padding-bottom:0}
   .col h3{margin:0 0 9px;font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);
     display:flex;align-items:center;gap:7px}
   .col h3 .pt{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
@@ -985,16 +991,27 @@ function pintarBoard(){
     const doGrupo = filtradas.filter(p => p.etapa === e.id);
     return `<div class="col">
       <h3><span class="pt" style="background:${e.cor}"></span>${e.nome}<span class="qt">${doGrupo.length}</span></h3>
-      ${doGrupo.map(p => `<div class="mini ${p._recusados ? "tem-corr" : ""}" data-id="${p.id}">
+      <div class="col-lista">${doGrupo.map(p => `<div class="mini ${p._recusados ? "tem-corr" : ""}" data-id="${p.id}">
         <b>${esc(p.referencia || "Pasta sem identificação")}</b>
         <span>${esc(nomeCliente(p.cliente_id))}</span>
         <span>${DATA[p.tipo] ? esc(DATA[p.tipo].label) : "tipo não escolhido"} · ${p._arqs} arquivo(s)</span>
         ${p._recusados ? `<span class="tag-corr" style="margin-top:4px">aguardando correção (${p._recusados})</span>` : ""}
-      </div>`).join("") || `<div style="font-size:12px;color:#98a1ad;padding:4px 2px">—</div>`}
+      </div>`).join("") || `<div style="font-size:12px;color:#98a1ad;padding:4px 2px">—</div>`}</div>
     </div>`;
   }).join("");
   document.getElementById("board").querySelectorAll(".mini").forEach(n => n.onclick = () => abrirPasta(n.dataset.id));
+  ajustarBoard();
 }
+
+// Mesma solução do portal de cedentes: o quadro passa a ter a altura que sobra
+// da janela, então a rolagem lateral fica sempre à vista, sem rolar a página.
+function ajustarBoard(){
+  const b = document.getElementById("board");
+  if(!b || !b.innerHTML || !b.offsetParent) return;
+  const topo = b.getBoundingClientRect().top + window.scrollY;
+  b.style.height = Math.max(240, window.innerHeight - topo - 6) + "px";
+}
+window.addEventListener("resize", ajustarBoard);
 
 document.getElementById("busca").oninput = e => { busca = e.target.value; pintarBoard(); };
 document.getElementById("filtroCli").addEventListener("click", e => {
