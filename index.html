@@ -2038,10 +2038,19 @@ function imprimirProcuracao(cli, devedor){
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
 <title>Procuração — ${esc(cli.nome)}</title>
 <style>
-  @page{size:A4;margin:12mm 20mm 18mm 25mm}
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:Arial,Helvetica,sans-serif;font-size:12pt;line-height:1.15;color:#000}
-  .timbrado{width:100%;margin-bottom:18px}
+  /* Timbrado 2026 (folha TIMBRADO-FA-2026.docx): as duas faixas repetem em toda
+     página (position:fixed) e a tabela com thead/tfoot reserva, página a página,
+     o espaço do cabeçalho (5,5 cm) e do rodapé (4,6 cm); laterais 3 cm / 2 cm. */
+  @page{size:A4;margin:0}
+  .tb-cab{position:fixed;top:0;left:0;width:210mm;height:54.19mm}
+  .tb-pe{position:fixed;bottom:0;left:0;width:210mm;height:43.78mm}
+  @media screen{ .tb-cab,.tb-pe{position:absolute} }
+  table.folha{width:100%;border-collapse:collapse}
+  table.folha thead td{height:55mm}
+  table.folha tfoot td{height:46mm}
+  table.folha tbody td{padding:0 20mm 0 30mm;vertical-align:top}
   h1{font-size:12pt;font-weight:bold;text-align:center;margin-bottom:14px}
   p.corpo{text-align:justify;text-indent:2cm}
   /* O fecho anda junto: data, linha e nome nunca sobram sozinhos na 2ª página
@@ -2049,10 +2058,11 @@ function imprimirProcuracao(cli, devedor){
   .fecho{page-break-inside:avoid;break-inside:avoid;text-align:center;margin-top:26px}
   .fecho .linha{margin-top:34px}
   .fecho .nome{font-weight:bold}
-  .pe{position:fixed;bottom:6mm;left:0;right:0;text-align:center;font-size:8pt;color:#444}
   @media print{ body{-webkit-print-color-adjust:exact;print-color-adjust:exact} }
 </style></head><body>
-<img class="timbrado" src="https://rrguimaraes09-hub.github.io/timbrado.jpg" alt="Felipe Albuquerque Advocacia">
+<img class="tb-cab" src="https://rrguimaraes09-hub.github.io/timbrado-2026-cabecalho.png" alt="">
+<img class="tb-pe" src="https://rrguimaraes09-hub.github.io/timbrado-2026-rodape.png" alt="">
+<table class="folha"><thead><tr><td></td></tr></thead><tfoot><tr><td></td></tr></tfoot><tbody><tr><td>
 <h1>PROCURAÇÃO</h1>
 <p class="corpo">Por este instrumento particular de procuração, a infra firmada <b>${esc(cli.procuracao_qualificacao)}</b>, nomeia e constitui como seus procuradores, <b>FELIPE MARCELINO DE ALBUQUERQUE SOCIEDADE INDIVIDUAL DE ADVOCACIA</b>, regularmente inscrita sob o CNPJ 42.478.147/0001-31, <b>Dr. FELIPE MARCELINO DE ALBUQUERQUE</b>, brasileiro, profissional regularmente inscrito na Ordem dos Advogados do Brasil, Seção de Santa Catarina sob o nº 33.415 e <b>Dr. RAFAEL ROCHA GUIMARÃES</b>, brasileiro, profissional regularmente inscrito na Ordem dos Advogados do Brasil, Seção de Santa Catarina sob o nº 61.237, todos com escritório, na Rua Desembargador Pedro Silva, nº 350, Ed. Henery, 1º Andar, bairro Comerciário, Criciúma/SC, CEP 88.802-300, com amplos e ilimitados poderes no Foro em geral, perante qualquer Juízo, Junta de Conciliação e Julgamento, Instância ou Tribunal, defender seus interesses em todas e quaisquer ações em que o outorgante seja autor, réu, assistente ou oponente podendo para tal fim mencionado procurador, usar dos poderes "ad et extra judicia", podendo transigir, receber e dar quitação, bem como praticar todos os demais atos que se fizerem necessários ao bom e fiel e desempenho do presente mandato, o que tudo dará por bom, firme e valioso, especialmente para ingressar com a ação cabível em face de ${esc(devedor)}.</p>
 <div class="fecho">
@@ -2060,14 +2070,13 @@ function imprimirProcuracao(cli, devedor){
   <div class="linha">____________________________________</div>
   <div class="nome">${esc(cli.procuracao_assinatura || cli.nome)}</div>
 </div>
-<div class="pe">Rua Desembargador Pedro Silva, nº 350, Ed. Henery, 1º Andar - Comerciário - Criciúma/SC - CEP 88.802-300<br>
-www.felipeadv.com.br • felipe@felipeadv.com.br • Fone/WhatsApp: (48) 3056-0800 / (48) 99103-1391</div>
+</td></tr></tbody></table>
 </body></html>`;
   const w = window.open("", "_blank");
   if(!w){ informar("O navegador bloqueou a janela. Libere os pop-ups para este site e tente de novo."); return; }
   w.document.write(html);
   w.document.close();
-  // espera o timbrado carregar antes de chamar a impressão, senão sai sem cabeçalho
+  // espera as faixas do timbrado carregarem antes de chamar a impressão, senão sai sem cabeçalho
   w.onload = () => { w.focus(); setTimeout(()=>{ try{ w.print(); }catch(e){} }, 300); };
   setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 1200);
 }
