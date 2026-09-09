@@ -1,0 +1,128 @@
+name: Publicar na Locaweb
+
+# Publica o conteúdo deste repositório na hospedagem Locaweb do escritório,
+# na subpasta indicada em DESTINO, a cada push na main (ou por execução manual).
+# Dados de acesso vêm só dos Secrets do repositório; nada fica no código nem no log.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Uma publicação por vez neste repositório; a seguinte espera a anterior terminar.
+concurrency:
+  group: publicar-locaweb-${{ github.repository }}
+  cancel-in-progress: false
+
+env:
+  # ÚNICA linha que muda de um repositório para outro:
+  #   rrguimaraes09-hub.github.io -> public_html/acessocliente
+  #   documentos                  -> public_html/acessocliente/documentos
+  #   cedentes                    -> public_html/acessocliente/cedentes
+  #   relatorios                  -> public_html/acessocliente/relatorios
+  #   checklist                   -> public_html/acessocliente/checklist
+  DESTINO: public_html/acessocliente/documentos
+  # Endereço público correspondente, usado só para reescrever os links absolutos.
+  URL_SITE: https://www.felipeadv.com.br/acessocliente
+
+jobs:
+  publicar:
+    name: Publicar em ${{ github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+
+      - name: Conferir os Secrets
+        env:
+          LOCAWEB_SFTP_HOST: ${{ secrets.LOCAWEB_SFTP_HOST }}
+          LOCAWEB_SFTP_USER: ${{ secrets.LOCAWEB_SFTP_USER }}
+          LOCAWEB_SFTP_PASSWORD: ${{ secrets.LOCAWEB_SFTP_PASSWORD }}
+          LOCAWEB_SFTP_PORT: ${{ secrets.LOCAWEB_SFTP_PORT }}
+        run: |
+          faltando=0
+          for v in LOCAWEB_SFTP_HOST LOCAWEB_SFTP_USER LOCAWEB_SFTP_PASSWORD LOCAWEB_SFTP_PORT; do
+            if [ -z "${!v}" ]; then echo "::error::Secret $v não está configurado neste repositório"; faltando=1; fi
+          done
+          [ "$faltando" = 0 ] || exit 1
+          echo "Secrets presentes (valores não são exibidos)."
+
+      - name: Montar o pacote a enviar
+        run: |
+          set -euo pipefail
+          PACOTE="$RUNNER_TEMP/pacote"
+          rm -rf "$PACOTE"; mkdir -p "$PACOTE"
+          # Só o conteúdo do repositório: fora .git, .github e o README.
+          rsync -a --exclude '.git' --exclude '.github' --exclude 'README.md' ./ "$PACOTE/"
+          # Os fontes apontam para o GitHub Pages (base oficial). Na cópia do site os
+          # links absolutos passam a apontar para o próprio site, para o cliente não
+          # sair de felipeadv.com.br nem perder a sessão de login entre os módulos.
+          find "$PACOTE" -type f \( -name '*.html' -o -name '*.js' -o -name '*.json' -o -name '*.css' \) -print0 \
+            | xargs -0 --no-run-if-empty sed -i \
+                -e "s#https://rrguimaraes09-hub\.github\.io/#${URL_SITE}/#g" \
+                -e "s#https://rrguimaraes09-hub\.github\.io#${URL_SITE}#g"
+          echo "Arquivos que serão enviados para $DESTINO:"
+          (cd "$PACOTE" && find . -type f | sort | sed 's#^\./#  #')
+
+      - name: Instalar o cliente SFTP (lftp)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lftp > /dev/null
+
+      - name: Registrar a chave do servidor
+        env:
+          LOCAWEB_SFTP_HOST: ${{ secrets.LOCAWEB_SFTP_HOST }}
+          LOCAWEB_SFTP_PORT: ${{ secrets.LOCAWEB_SFTP_PORT }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          # Servidor Locaweb usa chave RSA legada: pede-se explicitamente o tipo rsa.
+          ssh-keyscan -p "$LOCAWEB_SFTP_PORT" -t rsa "$LOCAWEB_SFTP_HOST" > ~/.ssh/known_hosts 2>/dev/null || true
+          if [ ! -s ~/.ssh/known_hosts ]; then
+            echo "::error::Não foi possível obter a chave RSA do servidor SFTP (host/porta errados ou servidor fora do ar)"
+            exit 1
+          fi
+          chmod 600 ~/.ssh/known_hosts
+          echo "Impressão digital da chave registrada (não é segredo):"
+          ssh-keygen -lf ~/.ssh/known_hosts | sed 's/ [^ ]*$//'
+
+      - name: Enviar por SFTP
+        env:
+          LOCAWEB_SFTP_HOST: ${{ secrets.LOCAWEB_SFTP_HOST }}
+          LOCAWEB_SFTP_USER: ${{ secrets.LOCAWEB_SFTP_USER }}
+          LFTP_PASSWORD: ${{ secrets.LOCAWEB_SFTP_PASSWORD }}
+          LOCAWEB_SFTP_PORT: ${{ secrets.LOCAWEB_SFTP_PORT }}
+        run: |
+          set -euo pipefail
+          PACOTE="$RUNNER_TEMP/pacote"
+          # Verificação de host ATIVA (StrictHostKeyChecking=yes) com a chave registrada
+          # no passo anterior; as opções +ssh-rsa são a compatibilidade com a chave legada.
+          SSH_OPTS="-a -x -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa"
+          # --env-password lê a senha de LFTP_PASSWORD: ela não aparece em argumento nem no log.
+          lftp -u "$LOCAWEB_SFTP_USER" --env-password -p "$LOCAWEB_SFTP_PORT" "sftp://$LOCAWEB_SFTP_HOST" <<EOF
+          set sftp:connect-program "ssh $SSH_OPTS"
+          set net:timeout 30
+          set net:max-retries 2
+          set net:reconnect-interval-base 5
+          mkdir -p "$DESTINO"
+          set cmd:fail-exit true
+          cd "$DESTINO"
+          mirror -R --verbose --no-perms "$PACOTE" .
+          bye
+          EOF
+          echo "Envio concluído para $DESTINO."
+          # Nota: mirror -R SEM --delete. Nada do que já existe no servidor é apagado.
+
+      - name: Resumo da execução
+        run: |
+          {
+            echo "## Publicação na Locaweb"
+            echo ""
+            echo "- Repositório: \`${{ github.repository }}\`"
+            echo "- Ramo/commit: \`${{ github.ref_name }}\` @ \`${{ github.sha }}\`"
+            echo "- Destino no servidor: \`${DESTINO}/\`"
+            echo "- Endereço público: ${URL_SITE}$(echo "${DESTINO#public_html/acessocliente}")/"
+            echo "- Resultado: publicado com sucesso"
+          } >> "$GITHUB_STEP_SUMMARY"
